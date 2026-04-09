@@ -1,0 +1,31 @@
+# Build results
+Binaries/
+Intermediate/
+DerivedDataCache/
+
+# UE specific
+*.uproject.tmp
+*.log
+Saved/
+
+# Visual Studio
+.vs/
+*.sln.tmp
+*.user
+*.suo
+*.opensdf
+*.sdf
+
+# Compiled
+*.exe
+*.dll
+*.pdb
+*.lib
+*.exp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Perforce (if used)
+P4Win*
