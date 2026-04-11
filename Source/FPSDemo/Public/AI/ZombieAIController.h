@@ -91,6 +91,10 @@ protected:
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Zombie AI")
     float LoseTargetRange;
 
+    // 出生点位置（用于巡逻范围判定）
+    UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Zombie AI")
+    FVector HomeLocation;
+
     // 定时器句柄：用于定期检查目标可见性
     FTimerHandle VisibilityCheckTimer;
 

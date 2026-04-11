@@ -55,8 +55,21 @@ void AZombieAIController::OnPossess(APawn* InPawn)
 {
     Super::OnPossess(InPawn);
 
+    // 初始化出生点位置
+    if (InPawn)
+    {
+        HomeLocation = InPawn->GetActorLocation();
+    }
+
     // 启动行为树
     StartBehaviorTree();
+
+    // 将HomeLocation写入Blackboard
+    if (Blackboard)
+    {
+        Blackboard->SetValueAsVector(FName("HomeLocation"), HomeLocation);
+    }
+
     // 启动定时器：每0.5秒检查一次目标可见性
     GetWorldTimerManager().SetTimer(VisibilityCheckTimer, this, &AZombieAIController::CheckTargetVisibility, 0.5f, true);
 }
@@ -105,20 +118,21 @@ void AZombieAIController::StopBehaviorTree()
 /**
  * AI感知更新回调
  * 当AI感知到新的Actor时被调用
- * 检查是否是玩家控制的角色
+ * 从多个感知目标中选择最近的玩家
  */
 void AZombieAIController::OnPerceptionUpdated(const TArray<AActor*>& UpdatedActors)
 {
+    AActor* ClosestActor = nullptr;
+    float ClosestDistance = FLT_MAX;
+
     for (AActor* Actor : UpdatedActors)
     {
         ACharacter* SensedCharacter = Cast<ACharacter>(Actor);
         if (SensedCharacter && SensedCharacter->IsPlayerControlled())
         {
-            // 获取该Actor的感知信息
             FActorPerceptionBlueprintInfo PerceptionInfo;
             AIPerceptionComp->GetActorsPerception(Actor, PerceptionInfo);
 
-            // 检查是否成功感知到（而不是只是记忆中的位置）
             bool bIsSensed = false;
             for (const FAIStimulus& Stimulus : PerceptionInfo.LastSensedStimuli)
             {
@@ -131,22 +145,25 @@ void AZombieAIController::OnPerceptionUpdated(const TArray<AActor*>& UpdatedActo
 
             if (bIsSensed)
             {
-                // 设置为目标并更新可见性
-                SetTargetPlayer(Actor);
-                bCanSeeTarget = true;
-
-                // 同步更新僵尸自身的目标
-                AZombieBase* Zombie = GetControlledZombie();
-                if (Zombie)
+                float Distance = FVector::Dist(GetPawn()->GetActorLocation(), Actor->GetActorLocation());
+                if (Distance < ClosestDistance)
                 {
-                    Zombie->SetTargetPlayer(Actor);
+                    ClosestDistance = Distance;
+                    ClosestActor = Actor;
                 }
             }
-            else if (TargetPlayer == Actor)
-            {
-                // 如果是目标但不活跃，检查可见性
-                CheckTargetVisibility();
-            }
+        }
+    }
+
+    if (ClosestActor)
+    {
+        SetTargetPlayer(ClosestActor);
+        bCanSeeTarget = true;
+
+        AZombieBase* Zombie = GetControlledZombie();
+        if (Zombie)
+        {
+            Zombie->SetTargetPlayer(ClosestActor);
         }
     }
 }
