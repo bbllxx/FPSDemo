@@ -20,7 +20,7 @@ AHeavyZombie::AHeavyZombie()
     // 低速移动
     GetCharacterMovement()->MaxWalkSpeed = 200.0f;  // 比轻型僵尸慢3倍
     // 大型胶囊体
-    GetCapsuleComponent()->InitCapsuleSize(60.0f, 100.0f);
+    GetCapsuleComponent()->InitCapsuleSize(50.0f, 120.0f);
 }
 
 void AHeavyZombie::BeginPlay()
