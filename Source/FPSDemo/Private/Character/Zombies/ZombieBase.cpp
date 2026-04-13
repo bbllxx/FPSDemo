@@ -151,7 +151,7 @@ void AZombieBase::OnHearNoise(APawn* PawnInstigator, const FVector& Location, fl
  * 检查是否可以攻击
  * 基于冷却时间判断
  */
-bool AZombieBase::CanAttack() const
+bool AZombieBase::CanAttackAboutCooldown() const
 {
     // 当前时间 - 上次攻击时间 >= 冷却时间
     return (GetWorld()->GetTimeSeconds() - LastAttackTime) >= AttackCooldown;

@@ -52,7 +52,7 @@ public:
 
     /** 检查是否可以攻击（冷却是否结束） */
     UFUNCTION(BlueprintCallable, Category = "Zombie")
-    bool CanAttack() const;
+    bool CanAttackAboutCooldown() const;
 
     /** 检查目标是否在攻击范围内 */
     UFUNCTION(BlueprintCallable, Category = "Zombie")
