@@ -18,6 +18,7 @@ UE5.4 FPS 僵尸游戏项目，已实现僵尸系统 C++ 代码。
   - 包管理查询：`npm list`, `pip list`, `cargo tree`, `docker ps`, `docker images`
   - 目录切换：`cd`（切换工作目录，不修改文件）
   - **MCP 工具：** `WebSearch`（联网搜索）、`Grep`（代码搜索）、`Glob`（文件查找）、`WebFetch`（获取网页内容）、`ReadMcpResourceTool`（读取 MCP 资源）、`Read`（读取本地文件）
+  - **UE 源码查询：** 查看 UE 引擎源码（`E:\UE_5.4\Engine\Source\Runtime\Engine`）为读操作，无需授权
 - **记忆与计划文件：** 对 `.claude/` 目录下的记忆文件（memory/）及 plans 文件进行读写操作时，不必询问，直接执行
 
 ---
