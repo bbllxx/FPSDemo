@@ -10,7 +10,7 @@ class USphereComponent;
 class UProjectileMovementComponent;
 
 UCLASS(config=Game)
-class AFPSDemoProjectile : public AActor
+class FPSDEMO_API AFPSDemoProjectile : public AActor
 {
 	GENERATED_BODY()
 
