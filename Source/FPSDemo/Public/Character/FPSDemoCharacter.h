@@ -21,51 +21,50 @@ class AFPSDemoCharacter : public ACharacter
 {
 	GENERATED_BODY()
 
-	/** Pawn mesh: 1st person view (arms; seen only by self) */
+	/** Pawn网格体：第一人称视角（手臂；仅自己可见） */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category=Mesh, meta = (AllowPrivateAccess = "true"))
 	USkeletalMeshComponent* Mesh1P;
 
-	/** First person camera */
+	/** 第一人称摄像机 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	UCameraComponent* FirstPersonCameraComponent;
 
-	/** Jump Input Action */
+	/** 跳跃输入动作 */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Input, meta=(AllowPrivateAccess = "true"))
 	UInputAction* JumpAction;
 
-	/** Move Input Action */
+	/** 移动输入动作 */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Input, meta=(AllowPrivateAccess = "true"))
 	UInputAction* MoveAction;
-	
+
 public:
 	AFPSDemoCharacter();
 
 protected:
-	virtual void BeginPlay();
+	virtual void BeginPlay() override;
 
 public:
-		
-	/** Look Input Action */
+
+	/** 视角输入动作 */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	class UInputAction* LookAction;
 
 protected:
-	/** Called for movement input */
+	/** 处理移动输入 */
 	void Move(const FInputActionValue& Value);
 
-	/** Called for looking input */
+	/** 处理视角输入 */
 	void Look(const FInputActionValue& Value);
 
 protected:
-	// APawn interface
+	// APawn接口
 	virtual void SetupPlayerInputComponent(UInputComponent* InputComponent) override;
-	// End of APawn interface
+	// APawn接口结束
 
 public:
-	/** Returns Mesh1P subobject **/
+	/** 返回Mesh1P子对象 **/
 	USkeletalMeshComponent* GetMesh1P() const { return Mesh1P; }
-	/** Returns FirstPersonCameraComponent subobject **/
+	/** 返回FirstPersonCameraComponent子对象 **/
 	UCameraComponent* GetFirstPersonCameraComponent() const { return FirstPersonCameraComponent; }
 
 };
-

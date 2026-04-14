@@ -20,4 +20,7 @@ public:
 protected:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chase")
     float AcceptableRadius = 100.0f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chase")
+    float TickInterval = 0.1f;
 };

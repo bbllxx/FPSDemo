@@ -29,6 +29,14 @@ protected:
 
 private:
     FVector TargetLocation;
-    bool bHasReachedTarget;
+    FVector LastValidPatrolLocation;  // 最后一个有效的巡逻位置
+    bool bHasReachedTargetLocation;
     float WaitTimer;
+    float TickInterval = 0.3f;  // 默认Tick间隔时间
+
+    // 动态Tick间隔的距离阈值
+    float FarDistanceThreshold = 1000.0f;   // 超过此距离使用远距离间隔
+    float NearDistanceThreshold = 500.0f;    // 低于此距离使用近距离间隔
+    float FarTickInterval = 0.5f;            // 远距离Tick间隔
+    float NearTickInterval = 0.2f;           // 近距离Tick间隔
 };

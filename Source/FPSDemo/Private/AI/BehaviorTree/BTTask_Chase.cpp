@@ -7,6 +7,7 @@
 UBTTask_Chase::UBTTask_Chase()
 {
     bNotifyTick = true;
+    bTickIntervals = true;
     NodeName = TEXT("Chase");
 }
 
@@ -29,6 +30,9 @@ EBTNodeResult::Type UBTTask_Chase::ExecuteTask(UBehaviorTreeComponent& OwnerComp
     Blackboard->SetValueAsString(TEXT("State"), TEXT("Chase"));
 
     AIController->MoveToActor(Cast<AActor>(Target), AcceptableRadius);
+
+    // 设置Tick间隔
+    SetNextTickTime(NodeMemory, TickInterval);
 
     return EBTNodeResult::InProgress;
 }

@@ -18,16 +18,16 @@ DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
 AFPSDemoCharacter::AFPSDemoCharacter()
 {
-	// Set size for collision capsule
+	// 设置碰撞胶囊体大小
 	GetCapsuleComponent()->InitCapsuleSize(55.f, 96.0f);
-		
-	// Create a CameraComponent	
+
+	// 创建摄像机组件
 	FirstPersonCameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("FirstPersonCamera"));
 	FirstPersonCameraComponent->SetupAttachment(GetCapsuleComponent());
-	FirstPersonCameraComponent->SetRelativeLocation(FVector(-10.f, 0.f, 60.f)); // Position the camera
+	FirstPersonCameraComponent->SetRelativeLocation(FVector(-10.f, 0.f, 60.f)); // 设置摄像机位置
 	FirstPersonCameraComponent->bUsePawnControlRotation = true;
 
-	// Create a mesh component that will be used when being viewed from a '1st person' view (when controlling this pawn)
+	// 创建网格体组件，用于第一人称视角（控制此Pawn时可见）
 	Mesh1P = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("CharacterMesh1P"));
 	Mesh1P->SetOnlyOwnerSee(true);
 	Mesh1P->SetupAttachment(FirstPersonCameraComponent);
@@ -40,25 +40,25 @@ AFPSDemoCharacter::AFPSDemoCharacter()
 
 void AFPSDemoCharacter::BeginPlay()
 {
-	// Call the base class  
+	// 调用基类
 	Super::BeginPlay();
 }
 
-//////////////////////////////////////////////////////////////////////////// Input
+//////////////////////////////////////////////////////////////////////////// 输入
 
 void AFPSDemoCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
-{	
-	// Set up action bindings
+{
+	// 设置动作绑定
 	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent))
 	{
-		// Jumping
+		// 跳跃
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ACharacter::Jump);
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
 
-		// Moving
+		// 移动
 		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AFPSDemoCharacter::Move);
 
-		// Looking
+		// 视角
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &AFPSDemoCharacter::Look);
 	}
 	else
@@ -70,12 +70,12 @@ void AFPSDemoCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 
 void AFPSDemoCharacter::Move(const FInputActionValue& Value)
 {
-	// input is a Vector2D
+	// 输入为二维向量
 	FVector2D MovementVector = Value.Get<FVector2D>();
 
 	if (Controller != nullptr)
 	{
-		// add movement 
+		// 添加移动输入
 		AddMovementInput(GetActorForwardVector(), MovementVector.Y);
 		AddMovementInput(GetActorRightVector(), MovementVector.X);
 	}
@@ -83,14 +83,13 @@ void AFPSDemoCharacter::Move(const FInputActionValue& Value)
 
 void AFPSDemoCharacter::Look(const FInputActionValue& Value)
 {
-	// input is a Vector2D
+	// 输入为二维向量
 	FVector2D LookAxisVector = Value.Get<FVector2D>();
 
 	if (Controller != nullptr)
 	{
-		// add yaw and pitch input to controller
+		// 添加偏航和俯仰输入到控制器
 		AddControllerYawInput(LookAxisVector.X);
 		AddControllerPitchInput(LookAxisVector.Y);
 	}
 }
-

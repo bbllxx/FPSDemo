@@ -10,6 +10,7 @@ UBTTask_Patrol::UBTTask_Patrol()
 {
     NodeName = TEXT("Patrol");
     bNotifyTick = true;
+    bTickIntervals = true;
 }
 
 EBTNodeResult::Type UBTTask_Patrol::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
@@ -26,42 +27,55 @@ EBTNodeResult::Type UBTTask_Patrol::ExecuteTask(UBehaviorTreeComponent& OwnerCom
         return EBTNodeResult::Failed;
     }
 
-    // Set Blackboard "State" to "Patrol"
+    // 设置黑板 "State" 为 "Patrol"
     if (UBlackboardComponent* BlackboardComp = OwnerComp.GetBlackboardComponent())
     {
         BlackboardComp->SetValueAsName(TEXT("State"), TEXT("Patrol"));
     }
 
-    // Get spawn point as center
+    // 以生成点为中心
     FVector Center = Pawn->GetActorLocation();
 
-    // Generate random radius between PatrolRadiusMin and PatrolRadiusMax
+    // 在 PatrolRadiusMin 和 PatrolRadiusMax 之间生成随机半径
     float RandomRadius = FMath::RandRange(PatrolRadiusMin, PatrolRadiusMax);
 
-    // Generate random direction
+    // 生成随机方向
     float RandomAngle = FMath::RandRange(0.0f, 2.0f * PI);
     FVector RandomOffset = FVector(FMath::Cos(RandomAngle) * RandomRadius, FMath::Sin(RandomAngle) * RandomRadius, 0.0f);
     FVector RandomPoint = Center + RandomOffset;
 
-    // Find reachable navigation point
+    // 查找可达的导航点
     FNavLocation NavLocation;
     UNavigationSystemV1* NavSys = UNavigationSystemV1::GetNavigationSystem(AIController);
     if (NavSys && NavSys->GetRandomReachablePointInRadius(RandomPoint, 100.0f, NavLocation))
     {
         TargetLocation = NavLocation.Location;
+        LastValidPatrolLocation = TargetLocation;  // 成功时更新有效位置
     }
     else
     {
-        // Fallback to random point if navigation fails
-        TargetLocation = RandomPoint;
+        // 如果导航失败，使用上次的有效位置
+        if (!LastValidPatrolLocation.IsZero())
+        {
+            TargetLocation = LastValidPatrolLocation;
+            LastValidPatrolLocation = Pawn->GetActorLocation();  // 同时用当前位置更新
+        }
+        else
+        {
+            // 没有历史位置且导航失败，直接失败
+            return EBTNodeResult::Failed;
+        }
     }
 
-    // Move to target location
+    // 向目标位置移动
     AIController->MoveToLocation(TargetLocation);
 
-    // Initialize state
-    bHasReachedTarget = false;
+    // 初始化状态
+    bHasReachedTargetLocation = false;
     WaitTimer = 0.0f;
+
+    // 设置Tick间隔
+    SetNextTickTime(NodeMemory, TickInterval);
 
     return EBTNodeResult::InProgress;
 }
@@ -82,7 +96,7 @@ void UBTTask_Patrol::TickTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemo
         return;
     }
 
-    // Check if target is detected (Blackboard Target != None)
+    // 检查是否检测到目标（黑板 Target 不为 None）
     if (UBlackboardComponent* BlackboardComp = OwnerComp.GetBlackboardComponent())
     {
         UObject* Target = BlackboardComp->GetValueAsObject(TEXT("Target"));
@@ -93,13 +107,34 @@ void UBTTask_Patrol::TickTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemo
         }
     }
 
-    // Check if reached target location
-    float Distance = FVector::Dist(Pawn->GetActorLocation(), TargetLocation);
-    if (Distance < 100.0f)
+    // 检查是否到达目标位置
+    float DistanceToTarget = FVector::Dist(Pawn->GetActorLocation(), TargetLocation);
+
+    // 获取与玩家的距离，用于动态Tick间隔
+    float DistanceToPlayer = FarDistanceThreshold;
+    if (APawn* PlayerPawn = UGameplayStatics::GetPlayerPawn(this, 0))
     {
-        if (!bHasReachedTarget)
+        DistanceToPlayer = FVector::Dist(Pawn->GetActorLocation(), PlayerPawn->GetActorLocation());
+    }
+
+    // 根据与玩家的距离动态调整下次Tick间隔
+    float CurrentInterval = TickInterval;
+    if (DistanceToPlayer > FarDistanceThreshold)
+    {
+        CurrentInterval = FarTickInterval;
+    }
+    else if (DistanceToPlayer < NearDistanceThreshold)
+    {
+        CurrentInterval = NearTickInterval;
+    }
+    SetNextTickTime(NodeMemory, CurrentInterval);
+
+    //处理等待时间
+    if (DistanceToTarget < 100.0f)
+    {
+        if (!bHasReachedTargetLocation)
         {
-            bHasReachedTarget = true;
+            bHasReachedTargetLocation = true;
             WaitTimer = 0.0f;
         }
 

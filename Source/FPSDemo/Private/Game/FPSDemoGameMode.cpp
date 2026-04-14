@@ -7,9 +7,8 @@
 AFPSDemoGameMode::AFPSDemoGameMode()
 	: Super()
 {
-	// set default pawn class to our Blueprinted character
+	// 设置默认Pawn类为蓝图中的人物
 	static ConstructorHelpers::FClassFinder<APawn> PlayerPawnClassFinder(TEXT("/Game/FirstPerson/Blueprints/BP_FirstPersonCharacter"));
 	DefaultPawnClass = PlayerPawnClassFinder.Class;
 
 }
-

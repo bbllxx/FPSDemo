@@ -44,7 +44,7 @@ void ARangedZombie::BeginPlay()
  */
 void ARangedZombie::PerformAttack()
 {
-    if (!CanAttack())
+    if (!CanAttackAboutCooldown())
     {
         return;
     }

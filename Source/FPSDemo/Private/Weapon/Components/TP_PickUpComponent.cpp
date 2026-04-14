@@ -4,7 +4,7 @@
 
 UTP_PickUpComponent::UTP_PickUpComponent()
 {
-	// Setup the Sphere Collision
+	// 设置球体碰撞
 	SphereRadius = 32.f;
 }
 
@@ -12,21 +12,20 @@ void UTP_PickUpComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// Register our Overlap Event
+	// 注册重叠事件
 	OnComponentBeginOverlap.AddDynamic(this, &UTP_PickUpComponent::OnSphereBeginOverlap);
 }
 
 void UTP_PickUpComponent::OnSphereBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	// Checking if it is a First Person Character overlapping
+	// 检查是否是有第一人称人物重叠
 	AFPSDemoCharacter* Character = Cast<AFPSDemoCharacter>(OtherActor);
 	if(Character != nullptr)
 	{
-		// Notify that the actor is being picked up
+		// 通知物体被拾取
 		OnPickUp.Broadcast(Character);
 
-		// Unregister from the Overlap Event so it is no longer triggered
+		// 注销重叠事件，不再触发
 		OnComponentBeginOverlap.RemoveAll(this);
 	}
 }
-

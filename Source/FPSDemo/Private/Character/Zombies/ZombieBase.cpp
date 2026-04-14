@@ -179,7 +179,7 @@ bool AZombieBase::IsTargetInAttackRange() const
 void AZombieBase::PerformAttack()
 {
     // 检查冷却
-    if (!CanAttack())
+    if (!CanAttackAboutCooldown())
     {
         return;
     }

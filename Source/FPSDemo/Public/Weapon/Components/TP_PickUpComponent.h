@@ -7,8 +7,8 @@
 #include "Character/FPSDemoCharacter.h"
 #include "TP_PickUpComponent.generated.h"
 
-// Declaration of the delegate that will be called when someone picks this up
-// The character picking this up is the parameter sent with the notification
+// 委托声明：当有人拾取此物品时会被调用
+// 拾取的人物作为参数传递
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPickUp, AFPSDemoCharacter*, PickUpCharacter);
 
 UCLASS(Blueprintable, BlueprintType, ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
@@ -17,19 +17,18 @@ class FPSDEMO_API UTP_PickUpComponent : public USphereComponent
 	GENERATED_BODY()
 
 public:
-	
-	/** Delegate to whom anyone can subscribe to receive this event */
+
+	/** 任何人都可以订阅以接收此事件的委托 */
 	UPROPERTY(BlueprintAssignable, Category = "Interaction")
 	FOnPickUp OnPickUp;
 
 	UTP_PickUpComponent();
 protected:
 
-	/** Called when the game starts */
+	/** 游戏开始时调用 */
 	virtual void BeginPlay() override;
 
-	/** Code for when something overlaps this component */
+	/** 当有物体与此组件重叠时的处理代码 */
 	UFUNCTION()
 	void OnSphereBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 };
-

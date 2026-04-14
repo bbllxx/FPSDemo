@@ -31,7 +31,7 @@ EBTNodeResult::Type UBTTask_Attack::ExecuteTask(UBehaviorTreeComponent& OwnerCom
     Blackboard->SetValueAsString(TEXT("State"), TEXT("Attack"));
 
     AZombieBase* Zombie = Cast<AZombieBase>(AIController->GetPawn());
-    if (Zombie && Zombie->CanAttack())
+    if (Zombie && Zombie->CanAttackAboutCooldown())
     {
         Zombie->PerformAttack();
     }
@@ -66,7 +66,7 @@ void UBTTask_Attack::TickTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemo
         return;
     }
 
-    if (Zombie->IsTargetInAttackRange() && Zombie->CanAttack())
+    if (Zombie->IsTargetInAttackRange() && Zombie->CanAttackAboutCooldown())
     {
         Zombie->PerformAttack();
     }
