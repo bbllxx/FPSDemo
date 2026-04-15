@@ -18,7 +18,7 @@ UE5.4 FPS 僵尸游戏项目，已实现僵尸系统 C++ 代码。
   - 包管理查询：`npm list`, `pip list`, `cargo tree`, `docker ps`, `docker images`
   - 目录切换：`cd`（切换工作目录，不修改文件）
   - **MCP 工具：** `WebSearch`（联网搜索）、`Grep`（代码搜索）、`Glob`（文件查找）、`WebFetch`（获取网页内容）、`ReadMcpResourceTool`（读取 MCP 资源）、`Read`（读取本地文件）
-  - **UE 源码查询：** 查看 UE 引擎源码（`E:\UE_5.4\Engine\Source\Runtime\Engine`）为读操作，无需授权
+  - **UE 源码查询：** 查看 UE 引擎源码（`E:\UE_5.4`）为读操作，无需授权
 - **记忆与计划文件：** 对 `.claude/` 目录下的记忆文件（memory/）及 plans 文件进行读写操作时，不必询问，直接执行
 
 ---
@@ -27,6 +27,13 @@ UE5.4 FPS 僵尸游戏项目，已实现僵尸系统 C++ 代码。
 
 - **所有回答必须使用中文（简体）**，不得使用英文
 - 多元选择时，使用 `AskUserQuestion` 工具展示是/否选项，而不是开放式的提问
+
+---
+
+## 代码注释规范
+
+- **所有代码注释必须使用中文**
+- 修改代码时，将原有的英文注释翻译为中文
 
 ---
 
@@ -49,3 +56,14 @@ UE5.4 FPS 僵尸游戏项目，已实现僵尸系统 C++ 代码。
 ## 项目信息
 
 - **UE5 源码路径：** `E:\UE_5.4\Engine\Source\Runtime\Engine`
+
+---
+
+## 编译命令
+
+**UE5 项目编译（使用 UnrealBuildTool）：**
+```bash
+"E:/UE_5.4/Engine/Binaries/DotNET/UnrealBuildTool/UnrealBuildTool.exe" FPSDemoEditor Win64 Development -Project="$PWD/FPSDemo.uproject" -WaitMutex -NoHotReload
+```
+
+> 此命令直接编译 C++ 代码为 DLL，不依赖 Visual Studio IDE。
