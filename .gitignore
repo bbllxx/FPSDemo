@@ -29,3 +29,24 @@ Thumbs.db
 
 # Perforce (if used)
 P4Win*
+
+# 白名单之外的所有目录和文件
+.claude/
+.github/
+.vscode/
+Backup/
+Plugins/
+Content/__ExternalActors__/
+Content/__ExternalObjects__/
+Content/Characters/
+Content/Collections/
+Content/Developers/
+Content/FirstPersonArms/
+Content/FPWeapon/
+Content/LevelPrototyping/
+Content/StarterContent/
+Content/ThirdPerson/
+Source_Structure.md
+UpgradeLog.htm
+ZombieSystem.md
+待办事项.md
