@@ -50,7 +50,7 @@ void ARangedZombie::PerformAttack()
     }
 
     LastAttackTime = GetWorld()->GetTimeSeconds();
-    OnAttack();              // 触发攻击事件（播放动画等）
+    OnAttackAnim();              // 触发攻击事件（播放动画等）
     FireProjectile();        // 发射投射物
 }
 

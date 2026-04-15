@@ -8,7 +8,7 @@
 
 /**
  * AZombieAIController - 僵尸AI控制器
- * 负责僵尸的感知、追踪和攻击行为
+ * 负责僵尸的感知、追踪和攻击行为,可对多人进行感知（优先最近单位）
  * 使用BehaviorTree和Blackboard进行AI决策
  */
 UCLASS()
@@ -34,9 +34,9 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Zombie AI")
     void SetTargetPlayer(AActor* NewTarget);
 
-    /** 是否能看见目标 */
+    /** 是否能感知到目标 */
     UFUNCTION(BlueprintPure, Category = "Zombie AI")
-    bool CanSeeTarget() const { return bCanSeeTarget; }
+    bool CanPerceiveTarget() const { return bCanPerceiveTarget; }
 
     /** 获取当前AI状态 */
     UFUNCTION(BlueprintPure, Category = "Zombie AI")
@@ -75,9 +75,9 @@ protected:
     UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Zombie AI")
     TWeakObjectPtr<class AActor> TargetPlayer;
 
-    // 是否能看见目标
+    // 是否能感知到目标
     UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Zombie AI")
-    bool bCanSeeTarget;
+    bool bCanPerceiveTarget;
 
     // 当前AI状态（用于Blackboard同步）
     UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Zombie AI")
@@ -101,6 +101,10 @@ protected:
     /** AI感知更新回调（当感知到新Actor时调用） */
     UFUNCTION()
     void OnPerceptionUpdated(const TArray<AActor*>& UpdatedActors);
+
+    /** 目标从感知中消失时调用 */
+    UFUNCTION()
+    void OnTargetPerceptionForgotten(AActor* ForgottenActor);
 
     /** 定期检查目标是否仍可见 */
     UFUNCTION()

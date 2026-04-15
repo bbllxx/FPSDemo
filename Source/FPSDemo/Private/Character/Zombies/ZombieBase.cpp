@@ -3,7 +3,6 @@
 #include "Character/Zombies/ZombieBase.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Components/CapsuleComponent.h"
-#include "Perception/PawnSensingComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Engine/DamageEvents.h"
 
@@ -23,15 +22,6 @@ AZombieBase::AZombieBase()
     // 初始化为负的冷却时间，确保第一次可以立即攻击
     LastAttackTime = -AttackCooldown;
 
-    // 创建并配置感知组件 - 用于检测玩家
-    PawnSensingComp = CreateDefaultSubobject<UPawnSensingComponent>(TEXT("PawnSensingComp"));
-    PawnSensingComp->SetPeripheralVisionAngle(120.0f);         // 视野角度120度
-    PawnSensingComp->SightRadius = 2000.0f;                   // 视野半径2000
-    PawnSensingComp->HearingThreshold = 1000.0f;              // 听觉阈值
-    PawnSensingComp->LOSHearingThreshold = 1500.0f;           // 视线外听觉阈值
-    PawnSensingComp->bSeePawns = true;                        // 启用视觉检测
-    PawnSensingComp->bHearNoises = true;                      // 启用听觉检测
-
     // 配置角色移动组件
     GetCharacterMovement()->bOrientRotationToMovement = true;  // 朝向移动方向旋转
     GetCharacterMovement()->RotationRate = FRotator(0.0f, 500.0f, 0.0f);  // 旋转速度
@@ -47,15 +37,6 @@ void AZombieBase::BeginPlay()
 
     // 确保CurrentHealth与MaxHealth同步
     CurrentHealth = MaxHealth;
-
-    // 绑定感知组件的回调函数
-    if (PawnSensingComp)
-    {
-        // 当看到Pawn时触发（看到玩家）
-        PawnSensingComp->OnSeePawn.AddDynamic(this, &AZombieBase::OnSeePawn);
-        // 当听到声音时触发
-        PawnSensingComp->OnHearNoise.AddDynamic(this, &AZombieBase::OnHearNoise);
-    }
 }
 
 void AZombieBase::Tick(float DeltaTime)
@@ -93,7 +74,7 @@ float AZombieBase::TakeDamage(float DamageAmount, struct FDamageEvent const& Dam
         }
 
         // 触发Blueprint中的受伤事件（播放受击特效等）
-        OnTakeDamage(ActualDamage, HitLocation);
+        OnTakeDamageAnim(ActualDamage, HitLocation);
 
         // 检查是否死亡
         if (CurrentHealth <= 0.0f)
@@ -112,7 +93,7 @@ float AZombieBase::TakeDamage(float DamageAmount, struct FDamageEvent const& Dam
 void AZombieBase::OnDeath()
 {
     // 触发Blueprint中的死亡事件（播放死亡特效等）
-    OnDeathEvent();
+    OnDeathAnim();
 
     // 禁用胶囊体碰撞
     GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
@@ -120,31 +101,6 @@ void AZombieBase::OnDeath()
     GetCharacterMovement()->DisableMovement();
     // 3秒后自动销毁Actor
     SetLifeSpan(3.0f);
-}
-
-/**
- * 感知组件回调 - 当看到Pawn时调用
- * 仅响应玩家控制的Pawn
- */
-void AZombieBase::OnSeePawn(APawn* Pawn)
-{
-    if (Pawn && Pawn->IsPlayerControlled())
-    {
-        TargetPlayer = Pawn;
-    }
-}
-
-/**
- * 感知组件回调 - 当听到声音时调用
- * 仅在还没有目标时响应玩家声音
- */
-void AZombieBase::OnHearNoise(APawn* PawnInstigator, const FVector& Location, float Volume)
-{
-    // 只有在没有目标时才响应声音（声音会让僵尸发现玩家）
-    if (!TargetPlayer.IsValid() && PawnInstigator && PawnInstigator->IsPlayerControlled())
-    {
-        TargetPlayer = PawnInstigator;
-    }
 }
 
 /**
@@ -187,7 +143,7 @@ void AZombieBase::PerformAttack()
     // 更新攻击时间
     LastAttackTime = GetWorld()->GetTimeSeconds();
     // 触发攻击事件（播放动画等）
-    OnAttack();
+    OnAttackAnim();
     // 对目标造成伤害
     DealDamageToTarget();
 }

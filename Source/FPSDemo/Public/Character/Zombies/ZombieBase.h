@@ -103,21 +103,9 @@ protected:
     UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Zombie AI")
     float LastAttackTime;
 
-    // 感知组件，用于检测玩家（视觉和听觉）
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-    TObjectPtr<class UPawnSensingComponent>  PawnSensingComp;
-
     /** 僵尸死亡时调用 */
     UFUNCTION()
     virtual void OnDeath();
-
-    /** 看到Pawn时调用（感知组件回调） */
-    UFUNCTION()
-    virtual void OnSeePawn(APawn* Pawn);
-
-    /** 听到声音时调用（感知组件回调） */
-    UFUNCTION()
-    virtual void OnHearNoise(APawn* PawnInstigator, const FVector& Location, float Volume);
 
     /** 对目标造成实际伤害 */
     UFUNCTION(BlueprintCallable, Category = "Zombie")
@@ -125,13 +113,13 @@ protected:
 
     /** 攻击事件（Blueprint实现，用于播放攻击动画等） */
     UFUNCTION(BlueprintImplementableEvent, Category = "Zombie")
-    void OnAttack();
+    void OnAttackAnim();
 
     /** 受伤事件（Blueprint实现，用于播放受伤特效等） */
     UFUNCTION(BlueprintImplementableEvent, Category = "Zombie")
-    void OnTakeDamage(float DamageAmount, FVector HitLocation);
+    void OnTakeDamageAnim(float DamageAmount, FVector HitLocation);
 
     /** 死亡事件（Blueprint实现，用于播放死亡特效等） */
     UFUNCTION(BlueprintImplementableEvent, Category = "Zombie")
-    void OnDeathEvent();
+    void OnDeathAnim();
 };

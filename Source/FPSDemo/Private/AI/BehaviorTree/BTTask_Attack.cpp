@@ -31,7 +31,7 @@ EBTNodeResult::Type UBTTask_Attack::ExecuteTask(UBehaviorTreeComponent& OwnerCom
     Blackboard->SetValueAsString(TEXT("State"), TEXT("Attack"));
 
     AZombieBase* Zombie = Cast<AZombieBase>(AIController->GetPawn());
-    if (Zombie && Zombie->CanAttackAboutCooldown())
+    if (Zombie)
     {
         Zombie->PerformAttack();
     }

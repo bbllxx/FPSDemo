@@ -26,6 +26,8 @@ AZombieAIController::AZombieAIController()
     SightConfig->DetectionByAffiliation.bDetectEnemies = true;
     SightConfig->DetectionByAffiliation.bDetectFriendlies = false;
     SightConfig->DetectionByAffiliation.bDetectNeutrals = true;
+    // 刺激在感知系统中保留的时长（2秒后自动移除）
+    SightConfig->SetMaxAge(2.0f);
 
     // 应用感知配置
     AIPerceptionComp->ConfigureSense(*SightConfig);
@@ -34,7 +36,7 @@ AZombieAIController::AZombieAIController()
 
     // 初始化状态
     TargetPlayer = nullptr;
-    bCanSeeTarget = false;
+    bCanPerceiveTarget = false;
     CurrentState = FName("Idle");
     ChaseRange = 2000.0f;
     LoseTargetRange = 2500.0f;
@@ -48,6 +50,7 @@ void AZombieAIController::BeginPlay()
     if (AIPerceptionComp)
     {
         AIPerceptionComp->OnPerceptionUpdated.AddDynamic(this, &AZombieAIController::OnPerceptionUpdated);
+        AIPerceptionComp->OnTargetPerceptionForgotten.AddDynamic(this, &AZombieAIController::OnTargetPerceptionForgotten);
     }
 }
 
@@ -122,6 +125,10 @@ void AZombieAIController::StopBehaviorTree()
  */
 void AZombieAIController::OnPerceptionUpdated(const TArray<AActor*>& UpdatedActors)
 {
+    if (bCanPerceiveTarget||TargetPlayer.IsValid())
+    {
+        return;
+    }
     AActor* ClosestActor = nullptr;
     float ClosestDistance = FLT_MAX;
 
@@ -158,13 +165,25 @@ void AZombieAIController::OnPerceptionUpdated(const TArray<AActor*>& UpdatedActo
     if (ClosestActor)
     {
         SetTargetPlayer(ClosestActor);
-        bCanSeeTarget = true;
+        bCanPerceiveTarget = true;
 
         AZombieBase* Zombie = GetControlledZombie();
         if (Zombie)
         {
             Zombie->SetTargetPlayer(ClosestActor);
         }
+    }
+}
+
+/**
+ * 目标从感知中消失时调用
+ * 当感知系统清除对某个目标的追踪时触发
+ */
+void AZombieAIController::OnTargetPerceptionForgotten(AActor* ForgottenActor)
+{
+    if (ForgottenActor == TargetPlayer)
+    {
+        bCanPerceiveTarget = false;
     }
 }
 
@@ -176,7 +195,7 @@ void AZombieAIController::CheckTargetVisibility()
 {
     if (!TargetPlayer.IsValid())
     {
-        bCanSeeTarget = false;
+        bCanPerceiveTarget = false;
         return;
     }
 
@@ -190,29 +209,10 @@ void AZombieAIController::CheckTargetVisibility()
         return;
     }
 
-    // 检查目标当前是否被感知到
-    FActorPerceptionBlueprintInfo PerceptionInfo;
-    AIPerceptionComp->GetActorsPerception(TargetPlayer.Get(), PerceptionInfo);
-
-    bool bIsSensed = false;
-    for (const FAIStimulus& Stimulus : PerceptionInfo.LastSensedStimuli)
-    {
-        if (Stimulus.WasSuccessfullySensed())
-        {
-            bIsSensed = true;
-            break;
-        }
-    }
-
     // 如果没被感知到且距离超过追踪范围，则丢失目标
-    if (!bIsSensed && Distance > ChaseRange)
+    if (!bCanPerceiveTarget && Distance > ChaseRange)
     {
         OnTargetLost();
-    }
-    else
-    {
-        // 否则更新可见性状态
-        bCanSeeTarget = bIsSensed;
     }
 }
 
@@ -223,7 +223,7 @@ void AZombieAIController::CheckTargetVisibility()
 void AZombieAIController::OnTargetLost()
 {
     TargetPlayer = nullptr;
-    bCanSeeTarget = false;
+    bCanPerceiveTarget = false;
 
     // 同步清除僵尸的目标
     AZombieBase* Zombie = GetControlledZombie();
