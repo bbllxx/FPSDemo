@@ -63,7 +63,7 @@ EBTNodeResult::Type UBTTask_Patrol::ExecuteTask(UBehaviorTreeComponent& OwnerCom
         else
         {
             // 没有历史位置且导航失败，直接失败
-            return EBTNodeResult::Failed;
+            TargetLocation = OwnerComp.GetBlackboardComponent()->GetValueAsVector(FName("HomeLocation"));
         }
     }
 
@@ -107,8 +107,6 @@ void UBTTask_Patrol::TickTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemo
         }
     }
 
-    // 检查是否到达目标位置
-    float DistanceToTarget = FVector::Dist(Pawn->GetActorLocation(), TargetLocation);
 
     // 获取与玩家的距离，用于动态Tick间隔
     float DistanceToPlayer = FarDistanceThreshold;
@@ -129,7 +127,10 @@ void UBTTask_Patrol::TickTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemo
     }
     SetNextTickTime(NodeMemory, CurrentInterval);
 
-    //处理等待时间
+
+    // 检查是否到达目标位置,并处理等待时间
+    float DistanceToTarget = FVector::Dist(Pawn->GetActorLocation(), TargetLocation);
+
     if (DistanceToTarget < 100.0f)
     {
         if (!bHasReachedTargetLocation)
