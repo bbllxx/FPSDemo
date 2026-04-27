@@ -1,5 +1,11 @@
 # AGENTS.md
 
+## 生成代码版权规范
+
+- 生成或新增代码文件时，不要添加 `// Copyright Epic Games, Inc. All Rights Reserved.`。
+- 这是 Epic 官方代码的版权注释，不适用于按用户需求生成的项目代码。
+- 如果修改现有文件时碰到这类 Epic 官方版权注释，应按项目注释规范移除或替换为合适的中文说明。
+
 ## 代码注释规范
 
 - 所有代码注释必须使用中文。
@@ -81,14 +87,15 @@ Set-Location "C:\Users\Administrator.DESKTOP-V16TMRT\Documents\Unreal Projects\F
 - `UBTDecorator_HasTarget`：检查 Blackboard 的 `Target` 是否非空。
 - `UBTDecorator_InAttackRange`：从 AIController Pawn 转为 `AZombieBase`，调用 `IsTargetInAttackRange()`。
 - `UBTTask_Idle`：把 `State` 设为 `Idle`，立即成功。
-- `UBTTask_Patrol`：生成导航巡逻点，`MoveToLocation()`，到达后等待 `PatrolWaitTime`；如果发现 `Target` 则成功退出；根据玩家距离动态调整下次 Tick 间隔。
-- `UBTTask_Chase`：把 `State` 设为 `Chase`，每 `TickInterval=0.1` 秒重新 `MoveToActor()`。
+- `UBTTask_SetState`：把 Blackboard 的 `State` 写成任务配置的 `StateValue`，立即成功。
+- `UBTTask_FindPatrolLocation`：围绕 `HomeLocation` 生成导航巡逻点并写入 `PatrolLocation`，不移动、不等待、不 Tick。
+- `UBTTask_ZombieMoveTo`：继承 UE 的 `UBTTask_MoveTo`，发起移动前读取僵尸自身的追击接受半径，不自己 Tick，也不重复 `MoveToActor()`。
 - `UBTTask_Attack`：把 `State` 设为 `Attack`，进入时攻击一次，Tick 中在攻击范围内且冷却结束时继续攻击。
 
 ## 已知注意点
 
 - 当前多个源码文件中的中文注释在 PowerShell 输出中显示为乱码；编辑代码时应保持或恢复为正常中文注释。
-- `UBTTask_Attack` 和 `UBTTask_Patrol` 将运行时状态存放在节点成员变量中，若行为树节点被多个 AI 共享，可能需要改为节点实例化或使用 NodeMemory。
+- 旧追击任务和旧巡逻任务已删除；行为树应改用 `SetState`、`ZombieMoveTo`、`FindPatrolLocation`、内置 `Move To` 和内置 `Wait` 组合。
 - `State` 的写入方式不完全统一：有些地方使用 `SetValueAsName`，有些地方使用 `SetValueAsString`，修改行为树或 Blackboard 时需要确认键类型。
 - `AFPSDemoProjectile::OnHit()` 目前只处理物理模拟组件，没有直接对僵尸造成伤害；后续武器伤害系统可能会改为 LineTrace 和爆头判定。
 - 根目录 `待办事项.md` 记录的方向包括：Decorator/BehaviorTree 优化、攻击 AnimNotify、攻击流程重构、武器 LineTrace 与爆头判定。
