@@ -1,14 +1,14 @@
-// 版权所有 Epic Games, Inc. 保留所有权利。
-
 #if WITH_DEV_AUTOMATION_TESTS
 
 #include "Misc/AutomationTest.h"
 
 #include "AI/BehaviorTree/BTTask_Attack.h"
-#include "AI/BehaviorTree/BTTask_Chase.h"
+#include "AI/BehaviorTree/BTTask_FindPatrolLocation.h"
+#include "AI/BehaviorTree/BTTask_SetState.h"
 #include "AI/ZombieAIController.h"
 #include "BehaviorTree/Blackboard/BlackboardKeyType_Name.h"
 #include "BehaviorTree/Blackboard/BlackboardKeyType_Object.h"
+#include "BehaviorTree/Blackboard/BlackboardKeyType_Vector.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "BehaviorTree/BlackboardData.h"
 #include "BehaviorTree/BehaviorTreeComponent.h"
@@ -16,11 +16,14 @@
 #include "Engine/World.h"
 #include "GameFramework/Actor.h"
 #include "GameFramework/Character.h"
+#include "UObject/UnrealType.h"
 
 namespace FPSDemo::Tests
 {
 static const FName TargetKeyName(TEXT("Target"));
 static const FName StateKeyName(TEXT("State"));
+static const FName HomeLocationKeyName(TEXT("HomeLocation"));
+static const FName PatrolLocationKeyName(TEXT("PatrolLocation"));
 
 UBlackboardData* CreateZombieBlackboardData()
 {
@@ -29,9 +32,20 @@ UBlackboardData* CreateZombieBlackboardData()
     UBlackboardKeyType_Object* TargetKeyType = BlackboardData->UpdatePersistentKey<UBlackboardKeyType_Object>(TargetKeyName);
     TargetKeyType->BaseClass = AActor::StaticClass();
     BlackboardData->UpdatePersistentKey<UBlackboardKeyType_Name>(StateKeyName);
+    BlackboardData->UpdatePersistentKey<UBlackboardKeyType_Vector>(HomeLocationKeyName);
+    BlackboardData->UpdatePersistentKey<UBlackboardKeyType_Vector>(PatrolLocationKeyName);
 
     BlackboardData->UpdateKeyIDs();
     return BlackboardData;
+}
+
+void SetTaskFNameProperty(UObject* Task, const FName PropertyName, const FName Value)
+{
+    FNameProperty* Property = FindFProperty<FNameProperty>(Task->GetClass(), PropertyName);
+    if (Property)
+    {
+        Property->SetPropertyValue_InContainer(Task, Value);
+    }
 }
 }
 
@@ -42,7 +56,7 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FZombieAIControllerBlackboardSyncTest,
 bool FZombieAIControllerBlackboardSyncTest::RunTest(const FString& Parameters)
 {
     UWorld* World = UWorld::CreateWorld(EWorldType::Game, false);
-    if (!TestNotNull(TEXT("创建测试世界"), World))
+    if (!TestNotNull(TEXT("应创建测试世界"), World))
     {
         return false;
     }
@@ -82,7 +96,7 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FBTTaskAttackOutOfRangeTest,
 bool FBTTaskAttackOutOfRangeTest::RunTest(const FString& Parameters)
 {
     UWorld* World = UWorld::CreateWorld(EWorldType::Game, false);
-    if (!TestNotNull(TEXT("创建测试世界"), World))
+    if (!TestNotNull(TEXT("应创建测试世界"), World))
     {
         return false;
     }
@@ -136,7 +150,7 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FBTTaskStateWritesNameTest,
 bool FBTTaskStateWritesNameTest::RunTest(const FString& Parameters)
 {
     UWorld* World = UWorld::CreateWorld(EWorldType::Game, false);
-    if (!TestNotNull(TEXT("创建测试世界"), World))
+    if (!TestNotNull(TEXT("应创建测试世界"), World))
     {
         return false;
     }
@@ -163,13 +177,79 @@ bool FBTTaskStateWritesNameTest::RunTest(const FString& Parameters)
     TestEqual(TEXT("Attack 任务应按 Name 类型写入 State"),
         BlackboardComponent->GetValueAsName(FPSDemo::Tests::StateKeyName), FName(TEXT("Attack")));
 
-    UBTTask_Chase* ChaseTask = NewObject<UBTTask_Chase>();
-    TArray<uint8> ChaseMemory;
-    ChaseMemory.SetNumZeroed(sizeof(FBTTaskMemory) + 16);
-    uint8* ChaseNodeMemory = ChaseMemory.GetData() + sizeof(FBTTaskMemory);
-    ChaseTask->ExecuteTask(*BehaviorTreeComponent, ChaseNodeMemory);
-    TestEqual(TEXT("Chase 任务应按 Name 类型写入 State"),
+    World->DestroyWorld(false);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FBTTaskSetStateTest,
+    "FPSDemo.AI.BTTask.SetStateWritesConfiguredName",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FBTTaskSetStateTest::RunTest(const FString& Parameters)
+{
+    UWorld* World = UWorld::CreateWorld(EWorldType::Game, false);
+    if (!TestNotNull(TEXT("应创建测试世界"), World))
+    {
+        return false;
+    }
+    World->CreateAISystem();
+
+    AZombieAIController* Controller = World->SpawnActor<AZombieAIController>();
+    UBlackboardData* BlackboardData = FPSDemo::Tests::CreateZombieBlackboardData();
+    UBlackboardComponent* BlackboardComponent = nullptr;
+    TestTrue(TEXT("AI 控制器应成功使用测试黑板"), Controller->UseBlackboard(BlackboardData, BlackboardComponent));
+
+    UBehaviorTreeComponent* BehaviorTreeComponent = NewObject<UBehaviorTreeComponent>(Controller);
+    Controller->AddOwnedComponent(BehaviorTreeComponent);
+    BehaviorTreeComponent->RegisterComponent();
+    BehaviorTreeComponent->CacheBlackboardComponent(BlackboardComponent);
+
+    UBTTask_SetState* SetStateTask = NewObject<UBTTask_SetState>();
+    FPSDemo::Tests::SetTaskFNameProperty(SetStateTask, TEXT("StateValue"), TEXT("Chase"));
+
+    const EBTNodeResult::Type Result = SetStateTask->ExecuteTask(*BehaviorTreeComponent, nullptr);
+    TestEqual(TEXT("SetState 任务应立即成功"), Result, EBTNodeResult::Succeeded);
+    TestEqual(TEXT("SetState 应按配置写入 State"),
         BlackboardComponent->GetValueAsName(FPSDemo::Tests::StateKeyName), FName(TEXT("Chase")));
+
+    World->DestroyWorld(false);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FBTTaskFindPatrolLocationTest,
+    "FPSDemo.AI.BTTask.FindPatrolLocationWritesBlackboardVector",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FBTTaskFindPatrolLocationTest::RunTest(const FString& Parameters)
+{
+    UWorld* World = UWorld::CreateWorld(EWorldType::Game, false);
+    if (!TestNotNull(TEXT("应创建测试世界"), World))
+    {
+        return false;
+    }
+    World->CreateAISystem();
+
+    AZombieAIController* Controller = World->SpawnActor<AZombieAIController>();
+    ALightZombie* Zombie = World->SpawnActor<ALightZombie>(FVector::ZeroVector, FRotator::ZeroRotator);
+    Controller->Possess(Zombie);
+
+    UBlackboardData* BlackboardData = FPSDemo::Tests::CreateZombieBlackboardData();
+    UBlackboardComponent* BlackboardComponent = nullptr;
+    TestTrue(TEXT("AI 控制器应成功使用测试黑板"), Controller->UseBlackboard(BlackboardData, BlackboardComponent));
+
+    const FVector HomeLocation(300.0f, 400.0f, 0.0f);
+    BlackboardComponent->SetValueAsVector(FPSDemo::Tests::HomeLocationKeyName, HomeLocation);
+
+    UBehaviorTreeComponent* BehaviorTreeComponent = NewObject<UBehaviorTreeComponent>(Controller);
+    Controller->AddOwnedComponent(BehaviorTreeComponent);
+    BehaviorTreeComponent->RegisterComponent();
+    BehaviorTreeComponent->CacheBlackboardComponent(BlackboardComponent);
+
+    UBTTask_FindPatrolLocation* FindLocationTask = NewObject<UBTTask_FindPatrolLocation>();
+    const EBTNodeResult::Type FindResult = FindLocationTask->ExecuteTask(*BehaviorTreeComponent, nullptr);
+    TestEqual(TEXT("FindPatrolLocation 应只写巡逻点并立即成功"), FindResult, EBTNodeResult::Succeeded);
+    TestEqual(TEXT("无导航数据时应回退写入 HomeLocation"),
+        BlackboardComponent->GetValueAsVector(FPSDemo::Tests::PatrolLocationKeyName), HomeLocation);
 
     World->DestroyWorld(false);
     return true;
