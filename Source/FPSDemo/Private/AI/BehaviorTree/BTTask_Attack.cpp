@@ -1,9 +1,16 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// 版权所有 Epic Games, Inc. 保留所有权利。
 
 #include "AI/BehaviorTree/BTTask_Attack.h"
 #include "AIController.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Character/Zombies/ZombieBase.h"
+
+namespace
+{
+const FName TargetBlackboardKey(TEXT("Target"));
+const FName StateBlackboardKey(TEXT("State"));
+const FName AttackStateName(TEXT("Attack"));
+}
 
 UBTTask_Attack::UBTTask_Attack()
 {
@@ -22,19 +29,20 @@ EBTNodeResult::Type UBTTask_Attack::ExecuteTask(UBehaviorTreeComponent& OwnerCom
         return EBTNodeResult::Failed;
     }
 
-    UObject* Target = Blackboard->GetValueAsObject(TEXT("Target"));
+    UObject* Target = Blackboard->GetValueAsObject(TargetBlackboardKey);
     if (!Target)
     {
         return EBTNodeResult::Failed;
     }
 
-    Blackboard->SetValueAsString(TEXT("State"), TEXT("Attack"));
-
     AZombieBase* Zombie = Cast<AZombieBase>(AIController->GetPawn());
-    if (Zombie)
+    if (!Zombie || !Zombie->IsTargetInAttackRange())
     {
-        Zombie->PerformAttack();
+        return EBTNodeResult::Failed;
     }
+
+    Blackboard->SetValueAsName(StateBlackboardKey, AttackStateName);
+    Zombie->PerformAttack();
 
     AttackTimer = 0.0f;
 
@@ -52,7 +60,7 @@ void UBTTask_Attack::TickTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemo
         return;
     }
 
-    UObject* Target = Blackboard->GetValueAsObject(TEXT("Target"));
+    UObject* Target = Blackboard->GetValueAsObject(TargetBlackboardKey);
     if (!Target)
     {
         FinishLatentTask(OwnerComp, EBTNodeResult::Succeeded);
@@ -66,7 +74,13 @@ void UBTTask_Attack::TickTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemo
         return;
     }
 
-    if (Zombie->IsTargetInAttackRange() && Zombie->CanAttackAboutCooldown())
+    if (!Zombie->IsTargetInAttackRange())
+    {
+        FinishLatentTask(OwnerComp, EBTNodeResult::Failed);
+        return;
+    }
+
+    if (Zombie->CanAttackAboutCooldown())
     {
         Zombie->PerformAttack();
     }

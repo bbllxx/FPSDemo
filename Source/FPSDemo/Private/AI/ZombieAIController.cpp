@@ -1,4 +1,4 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// 版权所有 Epic Games, Inc. 保留所有权利。
 
 #include "AI/ZombieAIController.h"
 #include "Character/Zombies/ZombieBase.h"
@@ -8,6 +8,12 @@
 #include "Perception/AISenseConfig_Sight.h"
 #include "GameFramework/Character.h"
 #include "NavigationSystem.h"
+
+namespace
+{
+const FName TargetBlackboardKey(TEXT("Target"));
+const FName StateBlackboardKey(TEXT("State"));
+}
 
 AZombieAIController::AZombieAIController()
 {
@@ -222,24 +228,29 @@ void AZombieAIController::CheckTargetVisibility()
  */
 void AZombieAIController::OnTargetLost()
 {
-    TargetPlayer = nullptr;
+    SetTargetPlayer(nullptr);
     bCanPerceiveTarget = false;
-
-    // 同步清除僵尸的目标
-    AZombieBase* Zombie = GetControlledZombie();
-    if (Zombie)
-    {
-        Zombie->SetTargetPlayer(nullptr);
-    }
 }
 
 /**
  * 设置目标玩家
- * 同时同步到僵尸自身
+ * 同时同步到黑板和僵尸自身
  */
 void AZombieAIController::SetTargetPlayer(AActor* NewTarget)
 {
     TargetPlayer = NewTarget;
+
+    if (Blackboard)
+    {
+        if (NewTarget)
+        {
+            Blackboard->SetValueAsObject(TargetBlackboardKey, NewTarget);
+        }
+        else
+        {
+            Blackboard->ClearValue(TargetBlackboardKey);
+        }
+    }
 
     AZombieBase* Zombie = GetControlledZombie();
     if (Zombie)
@@ -258,7 +269,7 @@ void AZombieAIController::SetCurrentState(FName NewState)
 
     if (Blackboard)
     {
-        Blackboard->SetValueAsName(FName("State"), NewState);
+        Blackboard->SetValueAsName(StateBlackboardKey, NewState);
     }
 }
 

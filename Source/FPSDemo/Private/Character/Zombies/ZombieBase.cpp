@@ -134,12 +134,6 @@ bool AZombieBase::IsTargetInAttackRange() const
  */
 void AZombieBase::PerformAttack()
 {
-    // 检查冷却
-    if (!CanAttackAboutCooldown())
-    {
-        return;
-    }
-
     // 更新攻击时间
     LastAttackTime = GetWorld()->GetTimeSeconds();
     // 触发攻击事件（播放动画等）
