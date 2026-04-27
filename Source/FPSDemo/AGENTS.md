@@ -4,7 +4,7 @@
 
 - 生成或新增代码文件时，不要添加 `// Copyright Epic Games, Inc. All Rights Reserved.`。
 - 这是 Epic 官方代码的版权注释，不适用于按用户需求生成的项目代码。
-- 如果修改现有文件时碰到这类 Epic 官方版权注释，应按项目注释规范移除或替换为合适的中文说明。
+- 如果修改现有文件时碰到这类 Epic 官方版权注释，应按项目注释规范移除或替换为合适的个人说明。
 
 ## 代码注释规范
 
@@ -86,7 +86,6 @@ Set-Location "C:\Users\Administrator.DESKTOP-V16TMRT\Documents\Unreal Projects\F
 - Blackboard 常用键：`Target`、`State`、`HomeLocation`。
 - `UBTDecorator_HasTarget`：检查 Blackboard 的 `Target` 是否非空。
 - `UBTDecorator_InAttackRange`：从 AIController Pawn 转为 `AZombieBase`，调用 `IsTargetInAttackRange()`。
-- `UBTTask_Idle`：把 `State` 设为 `Idle`，立即成功。
 - `UBTTask_SetState`：把 Blackboard 的 `State` 写成任务配置的 `StateValue`，立即成功。
 - `UBTTask_FindPatrolLocation`：围绕 `HomeLocation` 生成导航巡逻点并写入 `PatrolLocation`，不移动、不等待、不 Tick。
 - `UBTTask_ZombieMoveTo`：继承 UE 的 `UBTTask_MoveTo`，发起移动前读取僵尸自身的追击接受半径，不自己 Tick，也不重复 `MoveToActor()`。
