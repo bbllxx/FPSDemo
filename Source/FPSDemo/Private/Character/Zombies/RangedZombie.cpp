@@ -1,4 +1,4 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// 版权所有 Epic Games, Inc. 保留所有权利。
 
 #include "Character/Zombies/RangedZombie.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -10,6 +10,7 @@ ARangedZombie::ARangedZombie()
 {
     // 设置为远程僵尸类型
     ZombieType = EZombieType::Ranged;
+    ClassId = 3;
 
     // 远程僵尸属性：中等血量、中等速度、远程攻击
     MaxHealth = 100.0f;
@@ -29,6 +30,7 @@ ARangedZombie::ARangedZombie()
 
     // 理想攻击距离：1500（太远会靠近，太近会后退）
     IdealAttackRange = 1500.0f;
+    ChaseAcceptableRadius = IdealAttackRange;
     // 投射物速度
     ProjectileSpeed = 2000.0f;
 }

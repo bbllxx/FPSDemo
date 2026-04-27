@@ -1,4 +1,4 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// 版权所有 Epic Games, Inc. 保留所有权利。
 
 #include "Character/Zombies/HeavyZombie.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -8,12 +8,14 @@ AHeavyZombie::AHeavyZombie()
 {
     // 设置为重型僵尸类型
     ZombieType = EZombieType::Heavy;
+    ClassId = 1;
 
     // 重型僵尸属性：高血量、低速度、高防御
     MaxHealth = 200.0f;         // 高血量（轻型的4倍）
     CurrentHealth = MaxHealth;
     AttackDamage = 25.0f;       // 高攻击伤害
     AttackRange = 150.0f;       // 中等攻击范围
+    ChaseAcceptableRadius = AttackRange;
     AttackCooldown = 2.0f;      // 慢攻击节奏
     DamageReduction = 0.5f;      // 50%伤害减免（实际受到伤害减半）
 

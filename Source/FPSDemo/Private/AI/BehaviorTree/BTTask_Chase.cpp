@@ -3,6 +3,7 @@
 #include "AI/BehaviorTree/BTTask_Chase.h"
 #include "AIController.h"
 #include "BehaviorTree/BlackboardComponent.h"
+#include "Character/Zombies/ZombieBase.h"
 
 namespace
 {
@@ -35,9 +36,15 @@ EBTNodeResult::Type UBTTask_Chase::ExecuteTask(UBehaviorTreeComponent& OwnerComp
         return EBTNodeResult::Failed;
     }
 
+    AZombieBase* Zombie = Cast<AZombieBase>(AIController->GetPawn());
+    if (!Zombie)
+    {
+        return EBTNodeResult::Failed;
+    }
+
     Blackboard->SetValueAsName(ChaseStateBlackboardKey, ChaseTaskStateName);
 
-    AIController->MoveToActor(TargetActor, AcceptableRadius);
+    AIController->MoveToActor(TargetActor, Zombie->GetChaseAcceptableRadius());
 
     // 设置Tick间隔
     SetNextTickTime(NodeMemory, TickInterval);
@@ -70,5 +77,12 @@ void UBTTask_Chase::TickTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemor
         return;
     }
 
-    AIController->MoveToActor(TargetActor, AcceptableRadius);
+    AZombieBase* Zombie = Cast<AZombieBase>(AIController->GetPawn());
+    if (!Zombie)
+    {
+        FinishLatentTask(OwnerComp, EBTNodeResult::Failed);
+        return;
+    }
+
+    AIController->MoveToActor(TargetActor, Zombie->GetChaseAcceptableRadius());
 }

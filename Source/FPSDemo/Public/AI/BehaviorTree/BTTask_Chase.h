@@ -1,4 +1,4 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// 版权所有 Epic Games, Inc. 保留所有权利。
 
 #pragma once
 
@@ -18,9 +18,6 @@ public:
     virtual void TickTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds) override;
 
 protected:
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chase")
-    float AcceptableRadius = 100.0f;
-
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chase")
     float TickInterval = 0.1f;
 };

@@ -1,4 +1,4 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// 版权所有 Epic Games, Inc. 保留所有权利。
 
 #include "Character/Zombies/LightZombie.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -8,12 +8,14 @@ ALightZombie::ALightZombie()
 {
     // 设置为轻型僵尸类型
     ZombieType = EZombieType::Light;
+    ClassId = 2;
 
     // 轻型僵尸属性：低血量、高速度、高攻速
     MaxHealth = 50.0f;          // 低血量（重型的一半）
     CurrentHealth = MaxHealth;
     AttackDamage = 10.0f;        // 低攻击伤害
     AttackRange = 100.0f;        // 短攻击范围（近身）
+    ChaseAcceptableRadius = AttackRange;
     AttackCooldown = 1.0f;       // 快攻击节奏
 
     // 高速移动

@@ -1,4 +1,4 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// 版权所有 Epic Games, Inc. 保留所有权利。
 
 #pragma once
 
@@ -70,10 +70,22 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Zombie")
     void SetTargetPlayer(AActor* NewTarget) { TargetPlayer = NewTarget; }
 
+    /** 获取僵尸类别编号 */
+    UFUNCTION(BlueprintPure, Category = "Zombie")
+    int32 GetClassId() const { return ClassId; }
+
+    /** 获取追击目标时允许停止的距离 */
+    UFUNCTION(BlueprintPure, Category = "Zombie AI")
+    float GetChaseAcceptableRadius() const { return ChaseAcceptableRadius; }
+
 protected:
     // 僵尸类型
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Zombie Stats")
     EZombieType ZombieType;
+
+    // 僵尸类别编号，用于快速区分具体类型
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Zombie Stats")
+    int32 ClassId;
 
     // 最大生命值
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Zombie Stats")
@@ -98,6 +110,10 @@ protected:
     // 当前追踪的目标玩家（弱引用，避免循环引用）
     UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Zombie AI")
     TWeakObjectPtr<AActor> TargetPlayer;
+
+    // 追击目标时允许停止的距离，由不同僵尸类型自行配置
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Zombie AI")
+    float ChaseAcceptableRadius;
 
     // 上次攻击时间（用于计算冷却）
     UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Zombie AI")

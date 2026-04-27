@@ -1,4 +1,4 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// 版权所有 Epic Games, Inc. 保留所有权利。
 
 #include "Character/Zombies/ZombieBase.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -18,7 +18,9 @@ AZombieBase::AZombieBase()
     AttackRange = 150.0f;
     AttackCooldown = 1.5f;
     ZombieType = EZombieType::None;
+    ClassId = 0;
     TargetPlayer = nullptr;
+    ChaseAcceptableRadius = 100.0f;
     // 初始化为负的冷却时间，确保第一次可以立即攻击
     LastAttackTime = -AttackCooldown;
 
