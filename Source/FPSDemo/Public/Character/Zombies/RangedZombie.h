@@ -1,4 +1,3 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
 
 #pragma once
 
@@ -17,9 +16,12 @@ class FPSDEMO_API ARangedZombie : public AZombieBase
     GENERATED_BODY()
 
 public:
+    static constexpr int32 ClassId = 3;
+
     ARangedZombie();
 
     virtual void BeginPlay() override;
+    virtual int32 GetClassId() const override { return ClassId; }
 
     /** 重写攻击行为：发射投射物而非近身攻击 */
     virtual void PerformAttack() override;

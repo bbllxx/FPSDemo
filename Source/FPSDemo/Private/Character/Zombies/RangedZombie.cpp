@@ -10,7 +10,6 @@ ARangedZombie::ARangedZombie()
 {
     // 设置为远程僵尸类型
     ZombieType = EZombieType::Ranged;
-    ClassId = 3;
 
     // 远程僵尸属性：中等血量、中等速度、远程攻击
     MaxHealth = 100.0f;

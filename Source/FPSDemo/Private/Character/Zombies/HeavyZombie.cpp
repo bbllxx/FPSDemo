@@ -8,7 +8,6 @@ AHeavyZombie::AHeavyZombie()
 {
     // 设置为重型僵尸类型
     ZombieType = EZombieType::Heavy;
-    ClassId = 1;
 
     // 重型僵尸属性：高血量、低速度、高防御
     MaxHealth = 200.0f;         // 高血量（轻型的4倍）

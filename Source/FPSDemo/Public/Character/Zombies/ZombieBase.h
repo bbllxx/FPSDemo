@@ -1,4 +1,3 @@
-// 版权所有 Epic Games, Inc. 保留所有权利。
 
 #pragma once
 
@@ -27,6 +26,8 @@ class FPSDEMO_API AZombieBase : public ACharacter
     GENERATED_BODY()
 
 public:
+    static constexpr int32 ClassId = 0;
+
     AZombieBase();
 
     // 游戏开始时调用，初始化组件和属性
@@ -72,7 +73,7 @@ public:
 
     /** 获取僵尸类别编号 */
     UFUNCTION(BlueprintPure, Category = "Zombie")
-    int32 GetClassId() const { return ClassId; }
+    virtual int32 GetClassId() const { return ClassId; }
 
     /** 获取追击目标时允许停止的距离 */
     UFUNCTION(BlueprintPure, Category = "Zombie AI")
@@ -82,10 +83,6 @@ protected:
     // 僵尸类型
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Zombie Stats")
     EZombieType ZombieType;
-
-    // 僵尸类别编号，用于快速区分具体类型
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Zombie Stats")
-    int32 ClassId;
 
     // 最大生命值
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Zombie Stats")

@@ -8,7 +8,6 @@ ALightZombie::ALightZombie()
 {
     // 设置为轻型僵尸类型
     ZombieType = EZombieType::Light;
-    ClassId = 2;
 
     // 轻型僵尸属性：低血量、高速度、高攻速
     MaxHealth = 50.0f;          // 低血量（重型的一半）

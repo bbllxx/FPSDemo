@@ -1,4 +1,3 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
 
 #pragma once
 
@@ -17,9 +16,12 @@ class FPSDEMO_API AHeavyZombie : public AZombieBase
     GENERATED_BODY()
 
 public:
+    static constexpr int32 ClassId = 1;
+
     AHeavyZombie();
 
     virtual void BeginPlay() override;
+    virtual int32 GetClassId() const override { return ClassId; }
 
 protected:
     // 伤害减免比例（受到伤害时按此比例减少）

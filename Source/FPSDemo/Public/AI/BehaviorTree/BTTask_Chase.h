@@ -1,4 +1,3 @@
-// 版权所有 Epic Games, Inc. 保留所有权利。
 
 #pragma once
 

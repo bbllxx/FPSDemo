@@ -1,4 +1,3 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
 
 #pragma once
 
@@ -17,7 +16,10 @@ class FPSDEMO_API ALightZombie : public AZombieBase
     GENERATED_BODY()
 
 public:
+    static constexpr int32 ClassId = 2;
+
     ALightZombie();
 
     virtual void BeginPlay() override;
+    virtual int32 GetClassId() const override { return ClassId; }
 };
