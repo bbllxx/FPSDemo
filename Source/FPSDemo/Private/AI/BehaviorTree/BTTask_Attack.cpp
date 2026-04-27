@@ -7,16 +7,15 @@
 
 namespace
 {
-const FName TargetBlackboardKey(TEXT("Target"));
-const FName StateBlackboardKey(TEXT("State"));
-const FName AttackStateName(TEXT("Attack"));
+const FName AttackTargetBlackboardKey(TEXT("Target"));
+const FName AttackStateBlackboardKey(TEXT("State"));
+const FName AttackTaskStateName(TEXT("Attack"));
 }
 
 UBTTask_Attack::UBTTask_Attack()
 {
     bNotifyTick = true;
     NodeName = TEXT("Attack");
-    AttackTimer = 0.0f;
 }
 
 EBTNodeResult::Type UBTTask_Attack::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
@@ -29,7 +28,7 @@ EBTNodeResult::Type UBTTask_Attack::ExecuteTask(UBehaviorTreeComponent& OwnerCom
         return EBTNodeResult::Failed;
     }
 
-    UObject* Target = Blackboard->GetValueAsObject(TargetBlackboardKey);
+    UObject* Target = Blackboard->GetValueAsObject(AttackTargetBlackboardKey);
     if (!Target)
     {
         return EBTNodeResult::Failed;
@@ -41,10 +40,8 @@ EBTNodeResult::Type UBTTask_Attack::ExecuteTask(UBehaviorTreeComponent& OwnerCom
         return EBTNodeResult::Failed;
     }
 
-    Blackboard->SetValueAsName(StateBlackboardKey, AttackStateName);
+    Blackboard->SetValueAsName(AttackStateBlackboardKey, AttackTaskStateName);
     Zombie->PerformAttack();
-
-    AttackTimer = 0.0f;
 
     return EBTNodeResult::InProgress;
 }
@@ -60,7 +57,7 @@ void UBTTask_Attack::TickTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemo
         return;
     }
 
-    UObject* Target = Blackboard->GetValueAsObject(TargetBlackboardKey);
+    UObject* Target = Blackboard->GetValueAsObject(AttackTargetBlackboardKey);
     if (!Target)
     {
         FinishLatentTask(OwnerComp, EBTNodeResult::Succeeded);
@@ -84,6 +81,4 @@ void UBTTask_Attack::TickTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemo
     {
         Zombie->PerformAttack();
     }
-
-    AttackTimer += DeltaSeconds;
 }

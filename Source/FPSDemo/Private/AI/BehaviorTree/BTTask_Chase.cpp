@@ -6,9 +6,9 @@
 
 namespace
 {
-const FName TargetBlackboardKey(TEXT("Target"));
-const FName StateBlackboardKey(TEXT("State"));
-const FName ChaseStateName(TEXT("Chase"));
+const FName ChaseTargetBlackboardKey(TEXT("Target"));
+const FName ChaseStateBlackboardKey(TEXT("State"));
+const FName ChaseTaskStateName(TEXT("Chase"));
 }
 
 UBTTask_Chase::UBTTask_Chase()
@@ -28,14 +28,14 @@ EBTNodeResult::Type UBTTask_Chase::ExecuteTask(UBehaviorTreeComponent& OwnerComp
         return EBTNodeResult::Failed;
     }
 
-    UObject* Target = Blackboard->GetValueAsObject(TargetBlackboardKey);
+    UObject* Target = Blackboard->GetValueAsObject(ChaseTargetBlackboardKey);
     AActor* TargetActor = Cast<AActor>(Target);
     if (!TargetActor)
     {
         return EBTNodeResult::Failed;
     }
 
-    Blackboard->SetValueAsName(StateBlackboardKey, ChaseStateName);
+    Blackboard->SetValueAsName(ChaseStateBlackboardKey, ChaseTaskStateName);
 
     AIController->MoveToActor(TargetActor, AcceptableRadius);
 
@@ -62,7 +62,7 @@ void UBTTask_Chase::TickTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemor
         return;
     }
 
-    UObject* Target = Blackboard->GetValueAsObject(TargetBlackboardKey);
+    UObject* Target = Blackboard->GetValueAsObject(ChaseTargetBlackboardKey);
     AActor* TargetActor = Cast<AActor>(Target);
     if (!TargetActor)
     {

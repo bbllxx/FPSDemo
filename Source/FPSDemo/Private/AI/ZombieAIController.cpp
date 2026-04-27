@@ -11,8 +11,8 @@
 
 namespace
 {
-const FName TargetBlackboardKey(TEXT("Target"));
-const FName StateBlackboardKey(TEXT("State"));
+const FName ZombieAITargetBlackboardKey(TEXT("Target"));
+const FName ZombieAIStateBlackboardKey(TEXT("State"));
 }
 
 AZombieAIController::AZombieAIController()
@@ -244,11 +244,11 @@ void AZombieAIController::SetTargetPlayer(AActor* NewTarget)
     {
         if (NewTarget)
         {
-            Blackboard->SetValueAsObject(TargetBlackboardKey, NewTarget);
+            Blackboard->SetValueAsObject(ZombieAITargetBlackboardKey, NewTarget);
         }
         else
         {
-            Blackboard->ClearValue(TargetBlackboardKey);
+            Blackboard->ClearValue(ZombieAITargetBlackboardKey);
         }
     }
 
@@ -269,7 +269,7 @@ void AZombieAIController::SetCurrentState(FName NewState)
 
     if (Blackboard)
     {
-        Blackboard->SetValueAsName(StateBlackboardKey, NewState);
+        Blackboard->SetValueAsName(ZombieAIStateBlackboardKey, NewState);
     }
 }
 
