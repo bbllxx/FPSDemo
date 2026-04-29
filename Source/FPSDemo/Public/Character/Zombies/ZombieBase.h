@@ -47,13 +47,13 @@ public:
     virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent,
         class AController* EventInstigator, AActor* DamageCauser) override;
 
-    /** 执行攻击动作 */
-    UFUNCTION(BlueprintCallable, Category = "Zombie")
-    virtual void PerformAttack();
-
-    /** 发起攻击，播放攻击动画并等待动画通知结算伤害 */
+    /** 兼容旧入口，内部转调 TryStartAttack */
     UFUNCTION(BlueprintCallable, Category = "Zombie")
     virtual bool StartAttack();
+
+    /** 尝试发起攻击；不判断攻击距离，命中距离由动画通知结算 */
+    UFUNCTION(BlueprintCallable, Category = "Zombie")
+    virtual bool TryStartAttack();
 
     /** 由攻击动画通知调用，结算本次攻击伤害 */
     UFUNCTION(BlueprintCallable, Category = "Zombie")

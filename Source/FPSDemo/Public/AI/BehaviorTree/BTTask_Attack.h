@@ -1,5 +1,3 @@
-// 版权所有 Epic Games, Inc. 保留所有权利。
-
 #pragma once
 
 #include "CoreMinimal.h"
@@ -15,6 +13,4 @@ public:
     UBTTask_Attack();
 
     virtual EBTNodeResult::Type ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;
-    virtual void TickTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds) override;
-
 };

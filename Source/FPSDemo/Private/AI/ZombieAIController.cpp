@@ -1,5 +1,3 @@
-// 版权所有 Epic Games, Inc. 保留所有权利。
-
 #include "AI/ZombieAIController.h"
 #include "Character/Zombies/ZombieBase.h"
 #include "BehaviorTree/BehaviorTree.h"
@@ -290,14 +288,14 @@ void AZombieAIController::ChaseTarget()
 
 /**
  * 攻击目标
- * 调用僵尸的PerformAttack
+ * 调用僵尸的 TryStartAttack
  */
 void AZombieAIController::AttackTarget()
 {
     AZombieBase* Zombie = GetControlledZombie();
     if (Zombie)
     {
-        Zombie->PerformAttack();
+        Zombie->TryStartAttack();
     }
 }
 

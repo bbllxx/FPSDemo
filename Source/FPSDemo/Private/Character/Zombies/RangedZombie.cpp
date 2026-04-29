@@ -41,16 +41,22 @@ void ARangedZombie::BeginPlay()
  * 重写攻击行为
  * 冷却检查后发射投射物而非近身攻击
  */
-void ARangedZombie::PerformAttack()
+bool ARangedZombie::TryStartAttack()
 {
     if (!CanAttackAboutCooldown())
     {
-        return;
+        return false;
+    }
+
+    if (!TargetPlayer.IsValid())
+    {
+        return false;
     }
 
     LastAttackTime = GetWorld()->GetTimeSeconds();
     OnAttackAnim();              // 触发攻击事件（播放动画等）
     FireProjectile();        // 发射投射物
+    return true;
 }
 
 /**

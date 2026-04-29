@@ -23,8 +23,8 @@ public:
     virtual void BeginPlay() override;
     virtual int32 GetClassId() const override { return ClassId; }
 
-    /** 重写攻击行为：发射投射物而非近身攻击 */
-    virtual void PerformAttack() override;
+    /** 重写攻击发起逻辑：播放远程攻击动画并发射投射物 */
+    virtual bool TryStartAttack() override;
 
     /** 发射投射物 */
     UFUNCTION(BlueprintCallable, Category = "Ranged Zombie")

@@ -63,13 +63,14 @@ Set-Location "C:\Users\Administrator.DESKTOP-V16TMRT\Documents\Unreal Projects\F
 
 - `AZombieBase` 继承 `ACharacter`，提供血量、攻击伤害、攻击距离、攻击冷却、目标引用、受伤、死亡和攻击逻辑。
 - `EZombieType` 类型：`Heavy`、`Light`、`Ranged`、`None`。
-- `AZombieBase::PerformAttack()` 检查冷却后触发 `OnAttackAnim()`，随后调用 `DealDamageToTarget()`。
+- `AZombieBase::TryStartAttack()` 检查目标、冷却和待结算状态后触发 `OnAttackAnim()`，不判断攻击距离。
+- `AZombieBase::CommitAttackDamage()` 由攻击动画通知调用，结算时再检查当前目标是否仍在攻击范围内。
 - `AZombieBase::DealDamageToTarget()` 对 `TargetPlayer` 调用 `UGameplayStatics::ApplyDamage`，前提是目标有效且在攻击范围内。
 - `AZombieBase::OnDeath()` 触发 `OnDeathAnim()`，关闭胶囊体碰撞，禁用移动，3 秒后销毁。
 - `AHeavyZombie`：`MaxHealth=200`、`AttackDamage=25`、`AttackRange=150`、`AttackCooldown=2`、`MaxWalkSpeed=200`、`DamageReduction=0.5`。
 - `ALightZombie`：`MaxHealth=50`、`AttackDamage=10`、`AttackRange=100`、`AttackCooldown=1`、`MaxWalkSpeed=600`。
 - `ARangedZombie`：`MaxHealth=100`、`AttackDamage=15`、`AttackRange=2000`、`AttackCooldown=2`、`MaxWalkSpeed=350`、`IdealAttackRange=1500`、`ProjectileSpeed=2000`。
-- `ARangedZombie` 重写 `PerformAttack()`，通过 `FireProjectile()` 生成 `ProjectileClass`，远程伤害预期由投射物自身处理。
+- `ARangedZombie` 重写 `TryStartAttack()`，通过 `FireProjectile()` 生成 `ProjectileClass`，远程伤害预期由投射物自身处理。
 
 ## AI 系统
 
@@ -79,17 +80,18 @@ Set-Location "C:\Users\Administrator.DESKTOP-V16TMRT\Documents\Unreal Projects\F
 - `OnPossess()` 记录出生点，启动 Behavior Tree，把 `HomeLocation` 写入 Blackboard，并每 0.5 秒调用 `CheckTargetVisibility()`。
 - `OnPerceptionUpdated()` 从感知到的玩家中选最近目标，调用 `SetTargetPlayer()` 并同步到受控僵尸。
 - `CheckTargetVisibility()` 超出 `LoseTargetRange` 或在不可见且超出 `ChaseRange` 时调用 `OnTargetLost()`。
-- `ChaseTarget()` 使用 `MoveToActor(TargetPlayer, 100)`，`AttackTarget()` 调用僵尸 `PerformAttack()`，`StopAIMovement()` 调用 `StopMovement()`。
+- `ChaseTarget()` 使用 `MoveToActor(TargetPlayer, 100)`，`AttackTarget()` 调用僵尸 `TryStartAttack()`，`StopAIMovement()` 调用 `StopMovement()`。
 
 ## Behavior Tree 约定
 
 - Blackboard 常用键：`Target`、`State`、`HomeLocation`。
 - `UBTDecorator_HasTarget`：检查 Blackboard 的 `Target` 是否非空。
 - `UBTDecorator_InAttackRange`：从 AIController Pawn 转为 `AZombieBase`，调用 `IsTargetInAttackRange()`。
+- `UBTDecorator_ZombieAttackCooldown`：从 AIController Pawn 转为 `AZombieBase`，调用 `CanAttackAboutCooldown()`。
 - `UBTTask_SetState`：把 Blackboard 的 `State` 写成任务配置的 `StateValue`，立即成功。
 - `UBTTask_FindPatrolLocation`：围绕 `HomeLocation` 生成导航巡逻点并写入 `PatrolLocation`，不移动、不等待、不 Tick。
 - `UBTTask_ZombieMoveTo`：继承 UE 的 `UBTTask_MoveTo`，发起移动前读取僵尸自身的追击接受半径，不自己 Tick，也不重复 `MoveToActor()`。
-- `UBTTask_Attack`：把 `State` 设为 `Attack`，进入时攻击一次，Tick 中在攻击范围内且冷却结束时继续攻击。
+- `UBTTask_Attack`：把 `State` 设为 `Attack`，只调用 `TryStartAttack()` 并立即返回，不自己判断攻击范围或循环等待冷却。
 
 ## 已知注意点
 

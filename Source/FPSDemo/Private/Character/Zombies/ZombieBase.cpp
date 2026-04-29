@@ -128,18 +128,24 @@ bool AZombieBase::IsTargetInAttackRange() const
     return Distance <= AttackRange;
 }
 
-/**
- * 执行攻击
- * 保留旧入口，实际只发起攻击，伤害由动画通知提交
- */
-void AZombieBase::PerformAttack()
-{
-    StartAttack();
-}
-
 bool AZombieBase::StartAttack()
 {
+    return TryStartAttack();
+}
+
+bool AZombieBase::TryStartAttack()
+{
     if (!CanAttackAboutCooldown())
+    {
+        return false;
+    }
+
+    if (!TargetPlayer.IsValid())
+    {
+        return false;
+    }
+
+    if (bAttackDamagePending)
     {
         return false;
     }

@@ -3,6 +3,7 @@
 #include "Misc/AutomationTest.h"
 
 #include "AI/BehaviorTree/BTTask_Attack.h"
+#include "AI/BehaviorTree/BTDecorator_ZombieAttackCooldown.h"
 #include "AI/BehaviorTree/BTTask_FindPatrolLocation.h"
 #include "AI/BehaviorTree/BTTask_SetState.h"
 #include "AI/ZombieAIController.h"
@@ -13,6 +14,7 @@
 #include "BehaviorTree/BlackboardData.h"
 #include "BehaviorTree/BehaviorTreeComponent.h"
 #include "Character/Zombies/LightZombie.h"
+#include "Components/SceneComponent.h"
 #include "Engine/World.h"
 #include "GameFramework/Actor.h"
 #include "GameFramework/Character.h"
@@ -52,6 +54,21 @@ bool GetBoolPropertyValue(const UObject* Object, const FName PropertyName)
 {
     const FBoolProperty* Property = FindFProperty<FBoolProperty>(Object->GetClass(), PropertyName);
     return Property ? Property->GetPropertyValue_InContainer(Object) : false;
+}
+
+AActor* SpawnMovableDamageTarget(UWorld* World, const FVector& Location)
+{
+    AActor* Target = World->SpawnActor<AActor>();
+    if (!Target)
+    {
+        return nullptr;
+    }
+
+    USceneComponent* Root = NewObject<USceneComponent>(Target);
+    Target->SetRootComponent(Root);
+    Root->RegisterComponent();
+    Target->SetActorLocation(Location);
+    return Target;
 }
 }
 
@@ -95,11 +112,11 @@ bool FZombieAIControllerBlackboardSyncTest::RunTest(const FString& Parameters)
     return true;
 }
 
-IMPLEMENT_SIMPLE_AUTOMATION_TEST(FBTTaskAttackOutOfRangeTest,
-    "FPSDemo.AI.BTTask.AttackFailsWhenTargetOutOfRange",
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FBTTaskAttackStartsWithoutRangeCheckTest,
+    "FPSDemo.AI.BTTask.AttackStartsWithoutRangeCheck",
     EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 
-bool FBTTaskAttackOutOfRangeTest::RunTest(const FString& Parameters)
+bool FBTTaskAttackStartsWithoutRangeCheckTest::RunTest(const FString& Parameters)
 {
     UWorld* World = UWorld::CreateWorld(EWorldType::Game, false);
     if (!TestNotNull(TEXT("应创建测试世界"), World))
@@ -142,8 +159,50 @@ bool FBTTaskAttackOutOfRangeTest::RunTest(const FString& Parameters)
 
     UBTTask_Attack* AttackTask = NewObject<UBTTask_Attack>();
     const EBTNodeResult::Type Result = AttackTask->ExecuteTask(*BehaviorTreeComponent, nullptr);
-    TestEqual(TEXT("目标不在攻击范围内时 Attack 任务应失败"),
-        Result, EBTNodeResult::Failed);
+    TestEqual(TEXT("Attack 任务不应自己判断攻击范围"),
+        Result, EBTNodeResult::Succeeded);
+    TestTrue(TEXT("Attack 任务应只尝试发起攻击并等待动画通知结算"),
+        FPSDemo::Tests::GetBoolPropertyValue(Zombie, TEXT("bAttackDamagePending")));
+
+    World->DestroyWorld(false);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FBTDecoratorZombieAttackCooldownTest,
+    "FPSDemo.AI.BTDecorator.ZombieAttackCooldown",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FBTDecoratorZombieAttackCooldownTest::RunTest(const FString& Parameters)
+{
+    UWorld* World = UWorld::CreateWorld(EWorldType::Game, false);
+    if (!TestNotNull(TEXT("应创建测试世界"), World))
+    {
+        return false;
+    }
+    World->CreateAISystem();
+
+    AZombieAIController* Controller = World->SpawnActor<AZombieAIController>();
+    ALightZombie* Zombie = World->SpawnActor<ALightZombie>(FVector::ZeroVector, FRotator::ZeroRotator);
+    AActor* TargetActor = World->SpawnActor<AActor>(FVector(50.0f, 0.0f, 0.0f), FRotator::ZeroRotator);
+    Zombie->SetTargetPlayer(TargetActor);
+    Controller->Possess(Zombie);
+
+    UBlackboardData* BlackboardData = FPSDemo::Tests::CreateZombieBlackboardData();
+    UBlackboardComponent* BlackboardComponent = nullptr;
+    TestTrue(TEXT("AI 控制器应成功使用测试黑板"), Controller->UseBlackboard(BlackboardData, BlackboardComponent));
+
+    UBehaviorTreeComponent* BehaviorTreeComponent = NewObject<UBehaviorTreeComponent>(Controller);
+    Controller->AddOwnedComponent(BehaviorTreeComponent);
+    BehaviorTreeComponent->RegisterComponent();
+    BehaviorTreeComponent->CacheBlackboardComponent(BlackboardComponent);
+
+    UBTDecorator_ZombieAttackCooldown* CooldownDecorator = NewObject<UBTDecorator_ZombieAttackCooldown>();
+    TestTrue(TEXT("首次攻击前冷却 Decorator 应允许进入攻击分支"),
+        CooldownDecorator->CalculateRawConditionValue(*BehaviorTreeComponent, nullptr));
+
+    Zombie->TryStartAttack();
+    TestFalse(TEXT("发起攻击后冷却 Decorator 应阻止再次进入攻击分支"),
+        CooldownDecorator->CalculateRawConditionValue(*BehaviorTreeComponent, nullptr));
 
     World->DestroyWorld(false);
     return true;
@@ -200,12 +259,13 @@ bool FZombieBaseAttackDamageAnimNotifyTest::RunTest(const FString& Parameters)
     }
 
     ALightZombie* Attacker = World->SpawnActor<ALightZombie>(FVector::ZeroVector, FRotator::ZeroRotator);
-    AActor* Target = World->SpawnActor<AActor>(FVector(90.0f, 0.0f, 0.0f), FRotator::ZeroRotator);
+    AActor* Target = FPSDemo::Tests::SpawnMovableDamageTarget(World, FVector(90.0f, 0.0f, 0.0f));
+    TestNotNull(TEXT("应创建可移动的伤害测试目标"), Target);
     Attacker->SetTargetPlayer(Target);
     TestTrue(TEXT("测试目标应位于攻击范围内"), Attacker->IsTargetInAttackRange());
     TestTrue(TEXT("首次攻击冷却应允许攻击"), Attacker->CanAttackAboutCooldown());
 
-    Attacker->PerformAttack();
+    Attacker->TryStartAttack();
     TestTrue(TEXT("发起攻击后应等待动画通知结算"), FPSDemo::Tests::GetBoolPropertyValue(Attacker, TEXT("bAttackDamagePending")));
 
     const float AppliedDamage = Attacker->CommitAttackDamage();
@@ -214,6 +274,36 @@ bool FZombieBaseAttackDamageAnimNotifyTest::RunTest(const FString& Parameters)
 
     const float RepeatedDamage = Attacker->CommitAttackDamage();
     TestEqual(TEXT("同一次攻击不应重复结算伤害"), RepeatedDamage, 0.0f);
+
+    World->DestroyWorld(false);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FZombieBaseAttackCanBeDodgedBeforeAnimNotifyTest,
+    "FPSDemo.AI.ZombieBase.AttackCanBeDodgedBeforeAnimNotify",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FZombieBaseAttackCanBeDodgedBeforeAnimNotifyTest::RunTest(const FString& Parameters)
+{
+    UWorld* World = UWorld::CreateWorld(EWorldType::Game, false);
+    if (!TestNotNull(TEXT("应创建测试世界"), World))
+    {
+        return false;
+    }
+
+    ALightZombie* Attacker = World->SpawnActor<ALightZombie>(FVector::ZeroVector, FRotator::ZeroRotator);
+    AActor* Target = FPSDemo::Tests::SpawnMovableDamageTarget(World, FVector(90.0f, 0.0f, 0.0f));
+    TestNotNull(TEXT("应创建可移动的伤害测试目标"), Target);
+    Attacker->SetTargetPlayer(Target);
+    TestTrue(TEXT("起手时目标应位于攻击范围内"), Attacker->IsTargetInAttackRange());
+
+    Attacker->TryStartAttack();
+    Target->SetActorLocation(FVector(500.0f, 0.0f, 0.0f));
+    TestFalse(TEXT("动画通知前目标应已离开攻击范围"), Attacker->IsTargetInAttackRange());
+
+    const float AppliedDamage = Attacker->CommitAttackDamage();
+    TestEqual(TEXT("动画通知结算时目标已离开范围则不应造成伤害"), AppliedDamage, 0.0f);
+    TestFalse(TEXT("未命中后仍应清除待结算标记"), FPSDemo::Tests::GetBoolPropertyValue(Attacker, TEXT("bAttackDamagePending")));
 
     World->DestroyWorld(false);
     return true;
