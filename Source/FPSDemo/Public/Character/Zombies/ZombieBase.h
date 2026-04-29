@@ -51,6 +51,14 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Zombie")
     virtual void PerformAttack();
 
+    /** 发起攻击，播放攻击动画并等待动画通知结算伤害 */
+    UFUNCTION(BlueprintCallable, Category = "Zombie")
+    virtual bool StartAttack();
+
+    /** 由攻击动画通知调用，结算本次攻击伤害 */
+    UFUNCTION(BlueprintCallable, Category = "Zombie")
+    virtual float CommitAttackDamage();
+
     /** 检查是否可以攻击（冷却是否结束） */
     UFUNCTION(BlueprintCallable, Category = "Zombie")
     bool CanAttackAboutCooldown() const;
@@ -116,13 +124,17 @@ protected:
     UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Zombie AI")
     float LastAttackTime;
 
+    // 是否有一次已经发起但尚未由动画通知结算的攻击
+    UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Zombie AI")
+    bool bAttackDamagePending;
+
     /** 僵尸死亡时调用 */
     UFUNCTION()
     virtual void OnDeath();
 
     /** 对目标造成实际伤害 */
     UFUNCTION(BlueprintCallable, Category = "Zombie")
-    virtual void DealDamageToTarget();
+    virtual float DealDamageToTarget();
 
     /** 攻击事件（Blueprint实现，用于播放攻击动画等） */
     UFUNCTION(BlueprintImplementableEvent, Category = "Zombie")

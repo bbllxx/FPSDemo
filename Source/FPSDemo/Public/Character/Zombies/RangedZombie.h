@@ -52,7 +52,7 @@ protected:
     float ProjectileSpeed;
 
     /** 重写：远程僵尸不通过近身造成伤害（伤害由投射物自己造成） */
-    virtual void DealDamageToTarget() override;
+    virtual float DealDamageToTarget() override;
 
     /** 检查是否需要靠近目标（距离太远时） */
     UFUNCTION(BlueprintPure, Category = "Ranged Zombie")

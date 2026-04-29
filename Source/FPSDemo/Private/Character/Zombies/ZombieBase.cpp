@@ -1,5 +1,3 @@
-// 版权所有 Epic Games, Inc. 保留所有权利。
-
 #include "Character/Zombies/ZombieBase.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Components/CapsuleComponent.h"
@@ -22,6 +20,7 @@ AZombieBase::AZombieBase()
     ChaseAcceptableRadius = 100.0f;
     // 初始化为负的冷却时间，确保第一次可以立即攻击
     LastAttackTime = -AttackCooldown;
+    bAttackDamagePending = false;
 
     // 配置角色移动组件
     GetCharacterMovement()->bOrientRotationToMovement = true;  // 朝向移动方向旋转
@@ -131,34 +130,55 @@ bool AZombieBase::IsTargetInAttackRange() const
 
 /**
  * 执行攻击
- * 检查冷却和攻击范围，然后造成伤害
+ * 保留旧入口，实际只发起攻击，伤害由动画通知提交
  */
 void AZombieBase::PerformAttack()
 {
+    StartAttack();
+}
+
+bool AZombieBase::StartAttack()
+{
+    if (!CanAttackAboutCooldown())
+    {
+        return false;
+    }
+
     // 更新攻击时间
     LastAttackTime = GetWorld()->GetTimeSeconds();
+    bAttackDamagePending = true;
     // 触发攻击事件（播放动画等）
     OnAttackAnim();
-    // 对目标造成伤害
-    DealDamageToTarget();
+    return true;
+}
+
+float AZombieBase::CommitAttackDamage()
+{
+    if (!bAttackDamagePending)
+    {
+        return 0.0f;
+    }
+
+    bAttackDamagePending = false;
+    return DealDamageToTarget();
 }
 
 /**
  * 对目标造成实际伤害
  * 使用GameplayStatics的ApplyDamage进行伤害传递
  */
-void AZombieBase::DealDamageToTarget()
+float AZombieBase::DealDamageToTarget()
 {
     if (!TargetPlayer.IsValid())
     {
-        return;
+        return 0.0f;
     }
 
     if (!IsTargetInAttackRange())
     {
-        return;
+        return 0.0f;
     }
 
     // 应用伤害，伤害来源为僵尸自身
-    UGameplayStatics::ApplyDamage(TargetPlayer.Get(), AttackDamage, GetController(), this, nullptr);
+    return UGameplayStatics::ApplyDamage(TargetPlayer.Get(), AttackDamage, GetController(), this, nullptr);
 }

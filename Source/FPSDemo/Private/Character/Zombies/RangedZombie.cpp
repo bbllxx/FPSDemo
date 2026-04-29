@@ -1,5 +1,3 @@
-// 版权所有 Epic Games, Inc. 保留所有权利。
-
 #include "Character/Zombies/RangedZombie.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Components/SceneComponent.h"
@@ -109,10 +107,11 @@ void ARangedZombie::FireProjectile()
  * 重写伤害处理
  * 远程僵尸的伤害由投射物自己造成，这里为空
  */
-void ARangedZombie::DealDamageToTarget()
+float ARangedZombie::DealDamageToTarget()
 {
     // 远程僵尸不通过此方法造成伤害
     // 伤害由投射物碰撞时自己应用
+    return 0.0f;
 }
 
 /**

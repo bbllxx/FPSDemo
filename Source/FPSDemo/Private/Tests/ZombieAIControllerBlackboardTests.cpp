@@ -47,6 +47,12 @@ void SetTaskFNameProperty(UObject* Task, const FName PropertyName, const FName V
         Property->SetPropertyValue_InContainer(Task, Value);
     }
 }
+
+bool GetBoolPropertyValue(const UObject* Object, const FName PropertyName)
+{
+    const FBoolProperty* Property = FindFProperty<FBoolProperty>(Object->GetClass(), PropertyName);
+    return Property ? Property->GetPropertyValue_InContainer(Object) : false;
+}
 }
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FZombieAIControllerBlackboardSyncTest,
@@ -176,6 +182,38 @@ bool FBTTaskStateWritesNameTest::RunTest(const FString& Parameters)
     AttackTask->ExecuteTask(*BehaviorTreeComponent, nullptr);
     TestEqual(TEXT("Attack 任务应按 Name 类型写入 State"),
         BlackboardComponent->GetValueAsName(FPSDemo::Tests::StateKeyName), FName(TEXT("Attack")));
+
+    World->DestroyWorld(false);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FZombieBaseAttackDamageAnimNotifyTest,
+    "FPSDemo.AI.ZombieBase.AttackDamageWaitsForAnimNotify",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FZombieBaseAttackDamageAnimNotifyTest::RunTest(const FString& Parameters)
+{
+    UWorld* World = UWorld::CreateWorld(EWorldType::Game, false);
+    if (!TestNotNull(TEXT("应创建测试世界"), World))
+    {
+        return false;
+    }
+
+    ALightZombie* Attacker = World->SpawnActor<ALightZombie>(FVector::ZeroVector, FRotator::ZeroRotator);
+    AActor* Target = World->SpawnActor<AActor>(FVector(90.0f, 0.0f, 0.0f), FRotator::ZeroRotator);
+    Attacker->SetTargetPlayer(Target);
+    TestTrue(TEXT("测试目标应位于攻击范围内"), Attacker->IsTargetInAttackRange());
+    TestTrue(TEXT("首次攻击冷却应允许攻击"), Attacker->CanAttackAboutCooldown());
+
+    Attacker->PerformAttack();
+    TestTrue(TEXT("发起攻击后应等待动画通知结算"), FPSDemo::Tests::GetBoolPropertyValue(Attacker, TEXT("bAttackDamagePending")));
+
+    const float AppliedDamage = Attacker->CommitAttackDamage();
+    TestFalse(TEXT("提交伤害后应清除待结算标记"), FPSDemo::Tests::GetBoolPropertyValue(Attacker, TEXT("bAttackDamagePending")));
+    TestTrue(TEXT("动画通知提交后应造成伤害"), AppliedDamage > 0.0f);
+
+    const float RepeatedDamage = Attacker->CommitAttackDamage();
+    TestEqual(TEXT("同一次攻击不应重复结算伤害"), RepeatedDamage, 0.0f);
 
     World->DestroyWorld(false);
     return true;
