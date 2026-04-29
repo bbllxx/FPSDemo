@@ -85,7 +85,7 @@ Set-Location "C:\Users\Administrator.DESKTOP-V16TMRT\Documents\Unreal Projects\F
 ## Behavior Tree 约定
 
 - Blackboard 常用键：`Target`、`State`、`HomeLocation`。
-- `UBTDecorator_HasTarget`：检查 Blackboard 的 `Target` 是否非空。
+- `Target` 是否存在使用 UE 内置 Blackboard Decorator 检查，不再维护自定义 `HasTarget`。
 - `UBTDecorator_InAttackRange`：从 AIController Pawn 转为 `AZombieBase`，调用 `IsTargetInAttackRange()`。
 - `UBTDecorator_ZombieAttackCooldown`：从 AIController Pawn 转为 `AZombieBase`，调用 `CanAttackAboutCooldown()`。
 - `UBTTask_SetState`：把 Blackboard 的 `State` 写成任务配置的 `StateValue`，立即成功。
