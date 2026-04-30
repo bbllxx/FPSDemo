@@ -1,8 +1,10 @@
 #include "Character/Zombies/ZombieBase.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "Components/SkeletalMeshComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Engine/DamageEvents.h"
+#include "Weapon/WeaponTypes.h"
 
 AZombieBase::AZombieBase()
 {
@@ -28,7 +30,13 @@ AZombieBase::AZombieBase()
     GetCharacterMovement()->MaxWalkSpeed = 300.0f;            // 默认行走速度
 
     // 设置胶囊体碰撞响应 - 阻挡武器
+    // 胶囊体继续阻挡旧投射物。
     GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_GameTraceChannel1, ECR_Block);
+
+    // 枪械射线忽略胶囊体并命中骨骼网格体，便于读取命中骨骼。
+    GetCapsuleComponent()->SetCollisionResponseToChannel(FPSDemoWeapon::WeaponTraceChannel, ECR_Ignore);
+    GetMesh()->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+    GetMesh()->SetCollisionResponseToChannel(FPSDemoWeapon::WeaponTraceChannel, ECR_Block);
 }
 
 void AZombieBase::BeginPlay()

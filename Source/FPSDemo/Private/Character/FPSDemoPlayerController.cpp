@@ -1,6 +1,5 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
-
 #include "Character/FPSDemoPlayerController.h"
+
 #include "EnhancedInputSubsystems.h"
 #include "Engine/LocalPlayer.h"
 
@@ -10,7 +9,14 @@ void AFPSDemoPlayerController::BeginPlay()
 
 	if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer()))
 	{
-		Subsystem->AddMappingContext(InputMappingContext, 0);
+		if (InputMappingContext)
+		{
+			Subsystem->AddMappingContext(InputMappingContext, 0);
+		}
+
+		if (WeaponInputMappingContext)
+		{
+			Subsystem->AddMappingContext(WeaponInputMappingContext, 1);
+		}
 	}
 }
-
