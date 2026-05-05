@@ -150,11 +150,6 @@ void AZombieBase::ApplyMoveSpeed(EZombieMoveSpeedMode MoveSpeedMode)
     }
 }
 
-bool AZombieBase::StartAttack()
-{
-    return TryStartAttack();
-}
-
 bool AZombieBase::TryStartAttack()
 {
     if (!CanAttackAboutCooldown())
