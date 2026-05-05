@@ -1,12 +1,14 @@
 #include "Character/Zombies/ZombieBase.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "Components/SkeletalMeshComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Engine/DamageEvents.h"
+#include "Weapon/WeaponTypes.h"
 
 AZombieBase::AZombieBase()
 {
-    // 允许Tick更新
+    // 允许逐帧更新。
     PrimaryActorTick.bCanEverTick = true;
 
     // 默认属性值（子类会覆盖）
@@ -29,15 +31,20 @@ AZombieBase::AZombieBase()
     GetCharacterMovement()->RotationRate = FRotator(0.0f, 500.0f, 0.0f);  // 旋转速度
     GetCharacterMovement()->MaxWalkSpeed = PatrolSpeed;            // 默认使用巡逻速度
 
-    // 设置胶囊体碰撞响应 - 阻挡武器
+    // 胶囊体继续阻挡旧投射物，枪械射线则交给骨骼网格体处理。
     GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_GameTraceChannel1, ECR_Block);
+
+    // 枪械射线忽略胶囊体并命中骨骼网格体，便于读取 Hit.BoneName 做爆头判定。
+    GetCapsuleComponent()->SetCollisionResponseToChannel(FPSDemoWeapon::WeaponTraceChannel, ECR_Ignore);
+    GetMesh()->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+    GetMesh()->SetCollisionResponseToChannel(FPSDemoWeapon::WeaponTraceChannel, ECR_Block);
 }
 
 void AZombieBase::BeginPlay()
 {
     Super::BeginPlay();
 
-    // 确保CurrentHealth与MaxHealth同步
+    // 确保 CurrentHealth 与 MaxHealth 同步。
     CurrentHealth = MaxHealth;
 }
 
@@ -75,7 +82,7 @@ float AZombieBase::TakeDamage(float DamageAmount, struct FDamageEvent const& Dam
             HitLocation = PointDamage->HitInfo.ImpactPoint;
         }
 
-        // 触发Blueprint中的受伤事件（播放受击特效等）
+        // 触发蓝图中的受伤事件（播放受击特效等）。
         OnTakeDamageAnim(ActualDamage, HitLocation);
 
         // 检查是否死亡
@@ -94,14 +101,14 @@ float AZombieBase::TakeDamage(float DamageAmount, struct FDamageEvent const& Dam
  */
 void AZombieBase::OnDeath()
 {
-    // 触发Blueprint中的死亡事件（播放死亡特效等）
+    // 触发蓝图中的死亡事件（播放死亡特效等）。
     OnDeathAnim();
 
     // 禁用胶囊体碰撞
     GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
     // 禁用角色移动
     GetCharacterMovement()->DisableMovement();
-    // 3秒后自动销毁Actor
+    // 3 秒后自动销毁对象。
     SetLifeSpan(3.0f);
 }
 
@@ -188,7 +195,7 @@ float AZombieBase::CommitAttackDamage()
 
 /**
  * 对目标造成实际伤害
- * 使用GameplayStatics的ApplyDamage进行伤害传递
+ * 使用 GameplayStatics::ApplyDamage 进行伤害传递
  */
 float AZombieBase::DealDamageToTarget()
 {

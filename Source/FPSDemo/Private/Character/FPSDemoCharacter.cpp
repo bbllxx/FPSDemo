@@ -1,81 +1,107 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
-
 #include "Character/FPSDemoCharacter.h"
-#include "Weapon/Projectiles/FPSDemoProjectile.h"
-#include "Animation/AnimInstance.h"
+
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "EnhancedInputComponent.h"
-#include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
-#include "Engine/LocalPlayer.h"
+#include "Weapon/Components/WeaponInventoryComponent.h"
+#include "Weapon/WeaponTypes.h"
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
-//////////////////////////////////////////////////////////////////////////
-// AFPSDemoCharacter
-
 AFPSDemoCharacter::AFPSDemoCharacter()
 {
-	// 设置碰撞胶囊体大小
+	// 设置碰撞胶囊体大小。
 	GetCapsuleComponent()->InitCapsuleSize(55.f, 96.0f);
 
-	// 创建摄像机组件
+	// 创建第一人称相机。
 	FirstPersonCameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("FirstPersonCamera"));
 	FirstPersonCameraComponent->SetupAttachment(GetCapsuleComponent());
-	FirstPersonCameraComponent->SetRelativeLocation(FVector(-10.f, 0.f, 60.f)); // 设置摄像机位置
+	FirstPersonCameraComponent->SetRelativeLocation(FVector(-10.f, 0.f, 60.f));
 	FirstPersonCameraComponent->bUsePawnControlRotation = true;
 
-	// 创建网格体组件，用于第一人称视角（控制此Pawn时可见）
+	// 创建第一人称手臂网格体。
 	Mesh1P = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("CharacterMesh1P"));
 	Mesh1P->SetOnlyOwnerSee(true);
 	Mesh1P->SetupAttachment(FirstPersonCameraComponent);
 	Mesh1P->bCastDynamicShadow = false;
 	Mesh1P->CastShadow = false;
-	//Mesh1P->SetRelativeRotation(FRotator(0.9f, -19.19f, 5.2f));
 	Mesh1P->SetRelativeLocation(FVector(-30.f, 0.f, -150.f));
 
+	// 创建武器库存组件。
+	WeaponInventory = CreateDefaultSubobject<UWeaponInventoryComponent>(TEXT("WeaponInventory"));
 }
 
 void AFPSDemoCharacter::BeginPlay()
 {
-	// 调用基类
 	Super::BeginPlay();
-}
 
-//////////////////////////////////////////////////////////////////////////// 输入
+	if (WeaponInventory)
+	{
+		WeaponInventory->InitializeInventory(this);
+	}
+}
 
 void AFPSDemoCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
-	// 设置动作绑定
 	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent))
 	{
-		// 跳跃
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ACharacter::Jump);
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
-
-		// 移动
 		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AFPSDemoCharacter::Move);
-
-		// 视角
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &AFPSDemoCharacter::Look);
+
+		// 武器输入在蓝图未配置时保持可选，避免影响基础移动和视角。
+		if (FireAction)
+		{
+			EnhancedInputComponent->BindAction(FireAction, ETriggerEvent::Started, this, &AFPSDemoCharacter::StartFire);
+			EnhancedInputComponent->BindAction(FireAction, ETriggerEvent::Completed, this, &AFPSDemoCharacter::StopFire);
+			EnhancedInputComponent->BindAction(FireAction, ETriggerEvent::Canceled, this, &AFPSDemoCharacter::StopFire);
+		}
+
+		if (ReloadAction)
+		{
+			EnhancedInputComponent->BindAction(ReloadAction, ETriggerEvent::Started, this, &AFPSDemoCharacter::ReloadWeapon);
+		}
+
+		if (NextWeaponAction)
+		{
+			EnhancedInputComponent->BindAction(NextWeaponAction, ETriggerEvent::Started, this, &AFPSDemoCharacter::EquipNextWeapon);
+		}
+
+		if (PreviousWeaponAction)
+		{
+			EnhancedInputComponent->BindAction(PreviousWeaponAction, ETriggerEvent::Started, this, &AFPSDemoCharacter::EquipPreviousWeapon);
+		}
+
+		if (Slot1Action)
+		{
+			EnhancedInputComponent->BindAction(Slot1Action, ETriggerEvent::Started, this, &AFPSDemoCharacter::EquipWeaponSlot1);
+		}
+
+		if (Slot2Action)
+		{
+			EnhancedInputComponent->BindAction(Slot2Action, ETriggerEvent::Started, this, &AFPSDemoCharacter::EquipWeaponSlot2);
+		}
+
+		if (Slot3Action)
+		{
+			EnhancedInputComponent->BindAction(Slot3Action, ETriggerEvent::Started, this, &AFPSDemoCharacter::EquipWeaponSlot3);
+		}
 	}
 	else
 	{
-		UE_LOG(LogTemplateCharacter, Error, TEXT("'%s' Failed to find an Enhanced Input Component! This template is built to use the Enhanced Input system. If you intend to use the legacy system, then you will need to update this C++ file."), *GetNameSafe(this));
+		UE_LOG(LogTemplateCharacter, Error, TEXT("未找到 Enhanced Input Component，请确认角色输入组件使用 Enhanced Input。"));
 	}
 }
 
-
 void AFPSDemoCharacter::Move(const FInputActionValue& Value)
 {
-	// 输入为二维向量
-	FVector2D MovementVector = Value.Get<FVector2D>();
+	const FVector2D MovementVector = Value.Get<FVector2D>();
 
 	if (Controller != nullptr)
 	{
-		// 添加移动输入
 		AddMovementInput(GetActorForwardVector(), MovementVector.Y);
 		AddMovementInput(GetActorRightVector(), MovementVector.X);
 	}
@@ -83,13 +109,75 @@ void AFPSDemoCharacter::Move(const FInputActionValue& Value)
 
 void AFPSDemoCharacter::Look(const FInputActionValue& Value)
 {
-	// 输入为二维向量
-	FVector2D LookAxisVector = Value.Get<FVector2D>();
+	const FVector2D LookAxisVector = Value.Get<FVector2D>();
 
 	if (Controller != nullptr)
 	{
-		// 添加偏航和俯仰输入到控制器
 		AddControllerYawInput(LookAxisVector.X);
 		AddControllerPitchInput(LookAxisVector.Y);
+	}
+}
+
+void AFPSDemoCharacter::StartFire()
+{
+	if (WeaponInventory)
+	{
+		WeaponInventory->StartFire();
+	}
+}
+
+void AFPSDemoCharacter::StopFire()
+{
+	if (WeaponInventory)
+	{
+		WeaponInventory->StopFire();
+	}
+}
+
+void AFPSDemoCharacter::ReloadWeapon()
+{
+	if (WeaponInventory)
+	{
+		WeaponInventory->ReloadCurrentWeapon();
+	}
+}
+
+void AFPSDemoCharacter::EquipNextWeapon()
+{
+	if (WeaponInventory)
+	{
+		WeaponInventory->EquipNextWeapon();
+	}
+}
+
+void AFPSDemoCharacter::EquipPreviousWeapon()
+{
+	if (WeaponInventory)
+	{
+		WeaponInventory->EquipPreviousWeapon();
+	}
+}
+
+void AFPSDemoCharacter::EquipWeaponSlot1()
+{
+	if (WeaponInventory)
+	{
+		WeaponInventory->EquipWeaponSlot(EWeaponSlot::Primary);
+	}
+}
+
+void AFPSDemoCharacter::EquipWeaponSlot2()
+{
+	if (WeaponInventory)
+	{
+		WeaponInventory->EquipWeaponSlot(EWeaponSlot::Secondary);
+	}
+}
+
+void AFPSDemoCharacter::EquipWeaponSlot3()
+{
+	if (WeaponInventory)
+	{
+		WeaponInventory->EquipWeaponSlot(EWeaponSlot::Special);
 	}
 }
