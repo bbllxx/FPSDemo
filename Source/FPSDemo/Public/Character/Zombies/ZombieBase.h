@@ -15,6 +15,14 @@ enum class EZombieType : uint8
     None      UMETA(DisplayName = "无")
 };
 
+// 僵尸移动速度模式，用于行为树按状态切换速度
+UENUM(BlueprintType)
+enum class EZombieMoveSpeedMode : uint8
+{
+    Patrol    UMETA(DisplayName = "巡逻"),
+    Chase     UMETA(DisplayName = "追逐")
+};
+
 /**
  * AZombieBase - 僵尸基类
  * 所有僵尸类型的父类，继承自ACharacter
@@ -87,6 +95,22 @@ public:
     UFUNCTION(BlueprintPure, Category = "Zombie AI")
     float GetChaseAcceptableRadius() const { return ChaseAcceptableRadius; }
 
+    /** 获取巡逻移动速度 */
+    UFUNCTION(BlueprintPure, Category = "Zombie AI")
+    float GetPatrolSpeed() const { return PatrolSpeed; }
+
+    /** 获取追逐移动速度 */
+    UFUNCTION(BlueprintPure, Category = "Zombie AI")
+    float GetChaseSpeed() const { return ChaseSpeed; }
+
+    /** 按速度模式获取实际移动速度 */
+    UFUNCTION(BlueprintPure, Category = "Zombie AI")
+    float GetMoveSpeed(EZombieMoveSpeedMode MoveSpeedMode) const;
+
+    /** 按速度模式应用到 CharacterMovement */
+    UFUNCTION(BlueprintCallable, Category = "Zombie AI")
+    void ApplyMoveSpeed(EZombieMoveSpeedMode MoveSpeedMode);
+
 protected:
     // 僵尸类型
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Zombie Stats")
@@ -119,6 +143,14 @@ protected:
     // 追击目标时允许停止的距离，由不同僵尸类型自行配置
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Zombie AI")
     float ChaseAcceptableRadius;
+
+    // 巡逻时移动速度，由不同僵尸类型自行配置
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Zombie AI")
+    float PatrolSpeed;
+
+    // 追逐时移动速度，由不同僵尸类型自行配置
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Zombie AI")
+    float ChaseSpeed;
 
     // 上次攻击时间（用于计算冷却）
     UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Zombie AI")

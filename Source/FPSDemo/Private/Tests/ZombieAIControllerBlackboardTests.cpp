@@ -6,6 +6,7 @@
 #include "AI/BehaviorTree/BTDecorator_ZombieAttackCooldown.h"
 #include "AI/BehaviorTree/BTTask_FindPatrolLocation.h"
 #include "AI/BehaviorTree/BTTask_SetState.h"
+#include "AI/BehaviorTree/BTTask_SetZombieMoveSpeed.h"
 #include "AI/ZombieAIController.h"
 #include "BehaviorTree/Blackboard/BlackboardKeyType_Name.h"
 #include "BehaviorTree/Blackboard/BlackboardKeyType_Object.h"
@@ -18,6 +19,7 @@
 #include "Engine/World.h"
 #include "GameFramework/Actor.h"
 #include "GameFramework/Character.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "UObject/UnrealType.h"
 
 namespace FPSDemo::Tests
@@ -47,6 +49,23 @@ void SetTaskFNameProperty(UObject* Task, const FName PropertyName, const FName V
     if (Property)
     {
         Property->SetPropertyValue_InContainer(Task, Value);
+    }
+}
+
+void SetTaskEnumProperty(UObject* Task, const FName PropertyName, const int64 Value)
+{
+    FEnumProperty* EnumProperty = FindFProperty<FEnumProperty>(Task->GetClass(), PropertyName);
+    if (EnumProperty)
+    {
+        EnumProperty->GetUnderlyingProperty()->SetIntPropertyValue(
+            EnumProperty->ContainerPtrToValuePtr<void>(Task), Value);
+        return;
+    }
+
+    FByteProperty* ByteProperty = FindFProperty<FByteProperty>(Task->GetClass(), PropertyName);
+    if (ByteProperty)
+    {
+        ByteProperty->SetPropertyValue_InContainer(Task, static_cast<uint8>(Value));
     }
 }
 
@@ -378,6 +397,53 @@ bool FBTTaskFindPatrolLocationTest::RunTest(const FString& Parameters)
     TestEqual(TEXT("FindPatrolLocation 应只写巡逻点并立即成功"), FindResult, EBTNodeResult::Succeeded);
     TestEqual(TEXT("无导航数据时应回退写入 HomeLocation"),
         BlackboardComponent->GetValueAsVector(FPSDemo::Tests::PatrolLocationKeyName), HomeLocation);
+
+    World->DestroyWorld(false);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FBTTaskSetZombieMoveSpeedTest,
+    "FPSDemo.AI.BTTask.SetZombieMoveSpeedUsesZombieSpeed",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FBTTaskSetZombieMoveSpeedTest::RunTest(const FString& Parameters)
+{
+    UWorld* World = UWorld::CreateWorld(EWorldType::Game, false);
+    if (!TestNotNull(TEXT("应创建测试世界"), World))
+    {
+        return false;
+    }
+    World->CreateAISystem();
+
+    AZombieAIController* Controller = World->SpawnActor<AZombieAIController>();
+    ALightZombie* Zombie = World->SpawnActor<ALightZombie>(FVector::ZeroVector, FRotator::ZeroRotator);
+    Controller->Possess(Zombie);
+
+    UBlackboardData* BlackboardData = FPSDemo::Tests::CreateZombieBlackboardData();
+    UBlackboardComponent* BlackboardComponent = nullptr;
+    TestTrue(TEXT("AI 控制器应成功使用测试黑板"), Controller->UseBlackboard(BlackboardData, BlackboardComponent));
+
+    UBehaviorTreeComponent* BehaviorTreeComponent = NewObject<UBehaviorTreeComponent>(Controller);
+    Controller->AddOwnedComponent(BehaviorTreeComponent);
+    BehaviorTreeComponent->RegisterComponent();
+    BehaviorTreeComponent->CacheBlackboardComponent(BlackboardComponent);
+
+    UBTTask_SetZombieMoveSpeed* SpeedTask = NewObject<UBTTask_SetZombieMoveSpeed>();
+    Zombie->GetCharacterMovement()->MaxWalkSpeed = 999.0f;
+
+    FPSDemo::Tests::SetTaskEnumProperty(SpeedTask, TEXT("MoveSpeedMode"),
+        static_cast<int64>(EZombieMoveSpeedMode::Patrol));
+    const EBTNodeResult::Type PatrolResult = SpeedTask->ExecuteTask(*BehaviorTreeComponent, nullptr);
+    TestEqual(TEXT("SetZombieMoveSpeed 巡逻模式应立即成功"), PatrolResult, EBTNodeResult::Succeeded);
+    TestEqual(TEXT("巡逻模式应把移动速度设为僵尸自己的 PatrolSpeed"),
+        Zombie->GetCharacterMovement()->MaxWalkSpeed, Zombie->GetPatrolSpeed());
+
+    FPSDemo::Tests::SetTaskEnumProperty(SpeedTask, TEXT("MoveSpeedMode"),
+        static_cast<int64>(EZombieMoveSpeedMode::Chase));
+    const EBTNodeResult::Type ChaseResult = SpeedTask->ExecuteTask(*BehaviorTreeComponent, nullptr);
+    TestEqual(TEXT("SetZombieMoveSpeed 追逐模式应立即成功"), ChaseResult, EBTNodeResult::Succeeded);
+    TestEqual(TEXT("追逐模式应把移动速度设为僵尸自己的 ChaseSpeed"),
+        Zombie->GetCharacterMovement()->MaxWalkSpeed, Zombie->GetChaseSpeed());
 
     World->DestroyWorld(false);
     return true;

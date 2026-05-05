@@ -1,5 +1,3 @@
-// 版权所有 Epic Games, Inc. 保留所有权利。
-
 #include "Character/Zombies/HeavyZombie.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Components/CapsuleComponent.h"
@@ -17,9 +15,11 @@ AHeavyZombie::AHeavyZombie()
     ChaseAcceptableRadius = AttackRange;
     AttackCooldown = 2.0f;      // 慢攻击节奏
     DamageReduction = 0.5f;      // 50%伤害减免（实际受到伤害减半）
+    PatrolSpeed = 120.0f;
+    ChaseSpeed = 300.0f;
 
-    // 低速移动
-    GetCharacterMovement()->MaxWalkSpeed = 200.0f;  // 比轻型僵尸慢3倍
+    // 默认使用巡逻速度
+    GetCharacterMovement()->MaxWalkSpeed = PatrolSpeed;
     // 大型胶囊体
     GetCapsuleComponent()->InitCapsuleSize(50.0f, 120.0f);
 }

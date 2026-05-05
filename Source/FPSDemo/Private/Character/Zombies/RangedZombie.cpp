@@ -15,9 +15,11 @@ ARangedZombie::ARangedZombie()
     AttackDamage = 15.0f;        // 中等伤害（投射物命中时）
     AttackRange = 2000.0f;        // 极大攻击范围（可远程射击）
     AttackCooldown = 2.0f;        // 中等攻击间隔
+    PatrolSpeed = 180.0f;
+    ChaseSpeed = 350.0f;
 
-    // 中等移动速度
-    GetCharacterMovement()->MaxWalkSpeed = 350.0f;
+    // 默认使用巡逻速度
+    GetCharacterMovement()->MaxWalkSpeed = PatrolSpeed;
 
     // 创建并配置发射位置组件（挂载在Mesh上）
     MuzzleLocation = CreateDefaultSubobject<USceneComponent>(TEXT("MuzzleLocation"));

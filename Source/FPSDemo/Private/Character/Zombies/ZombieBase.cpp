@@ -18,6 +18,8 @@ AZombieBase::AZombieBase()
     ZombieType = EZombieType::None;
     TargetPlayer = nullptr;
     ChaseAcceptableRadius = 100.0f;
+    PatrolSpeed = 150.0f;
+    ChaseSpeed = 300.0f;
     // 初始化为负的冷却时间，确保第一次可以立即攻击
     LastAttackTime = -AttackCooldown;
     bAttackDamagePending = false;
@@ -25,7 +27,7 @@ AZombieBase::AZombieBase()
     // 配置角色移动组件
     GetCharacterMovement()->bOrientRotationToMovement = true;  // 朝向移动方向旋转
     GetCharacterMovement()->RotationRate = FRotator(0.0f, 500.0f, 0.0f);  // 旋转速度
-    GetCharacterMovement()->MaxWalkSpeed = 300.0f;            // 默认行走速度
+    GetCharacterMovement()->MaxWalkSpeed = PatrolSpeed;            // 默认使用巡逻速度
 
     // 设置胶囊体碰撞响应 - 阻挡武器
     GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_GameTraceChannel1, ECR_Block);
@@ -126,6 +128,26 @@ bool AZombieBase::IsTargetInAttackRange() const
     // 计算与目标的距离
     float Distance = FVector::Dist(GetActorLocation(), TargetPlayer.Get()->GetActorLocation());
     return Distance <= AttackRange;
+}
+
+float AZombieBase::GetMoveSpeed(EZombieMoveSpeedMode MoveSpeedMode) const
+{
+    switch (MoveSpeedMode)
+    {
+    case EZombieMoveSpeedMode::Chase:
+        return ChaseSpeed;
+    case EZombieMoveSpeedMode::Patrol:
+    default:
+        return PatrolSpeed;
+    }
+}
+
+void AZombieBase::ApplyMoveSpeed(EZombieMoveSpeedMode MoveSpeedMode)
+{
+    if (UCharacterMovementComponent* MovementComponent = GetCharacterMovement())
+    {
+        MovementComponent->MaxWalkSpeed = GetMoveSpeed(MoveSpeedMode);
+    }
 }
 
 bool AZombieBase::StartAttack()

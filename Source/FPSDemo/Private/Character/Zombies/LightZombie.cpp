@@ -1,5 +1,3 @@
-// 版权所有 Epic Games, Inc. 保留所有权利。
-
 #include "Character/Zombies/LightZombie.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Components/CapsuleComponent.h"
@@ -16,9 +14,11 @@ ALightZombie::ALightZombie()
     AttackRange = 100.0f;        // 短攻击范围（近身）
     ChaseAcceptableRadius = AttackRange;
     AttackCooldown = 1.0f;       // 快攻击节奏
+    PatrolSpeed = 250.0f;
+    ChaseSpeed = 500.0f;
 
-    // 高速移动
-    GetCharacterMovement()->MaxWalkSpeed = 600.0f;  // 速度是基类的2倍
+    // 默认使用巡逻速度
+    GetCharacterMovement()->MaxWalkSpeed = PatrolSpeed;
     // 较小的胶囊体（更灵活）
     GetCapsuleComponent()->InitCapsuleSize(40.0f, 90.0f);
 }
