@@ -7,6 +7,7 @@
 
 class USoundBase;
 
+// 武器参数集中在数据资产中，便于蓝图为不同枪械复用同一套 C++ 行为。
 UCLASS(BlueprintType)
 class FPSDEMO_API UWeaponDataAsset : public UDataAsset
 {

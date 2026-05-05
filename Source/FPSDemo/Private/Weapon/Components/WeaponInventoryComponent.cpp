@@ -55,6 +55,7 @@ bool UWeaponInventoryComponent::AddWeapon(AWeaponBase* NewWeapon)
     const bool bReplacingCurrentSlot = CurrentSlot == Data->Slot;
     if (SlotWeapon && SlotWeapon != NewWeapon)
     {
+        // 同一槽位只保留一把武器，替换前先停止旧武器的持续开火。
         SlotWeapon->StopFire();
         SlotWeapon->Destroy();
     }
@@ -62,6 +63,7 @@ bool UWeaponInventoryComponent::AddWeapon(AWeaponBase* NewWeapon)
     SlotWeapon = NewWeapon;
     NewWeapon->InitializeWeapon(OwnerCharacter, this);
     AttachWeaponToOwner(NewWeapon);
+    // 初始备弹汇入弹药类型池，便于同类武器共享备弹。
     AddReserveAmmo(Data->AmmoType, Data->InitialReserveAmmo, Data->MaxReserveAmmo);
 
     if (!CurrentWeapon || bReplacingCurrentSlot)
@@ -181,6 +183,7 @@ bool UWeaponInventoryComponent::FinishReloadCurrentWeapon()
     const UWeaponDataAsset* Data = CurrentWeapon->GetWeaponData();
     const int32 MissingAmmo = CurrentWeapon->GetMagazineCapacity() - CurrentWeapon->GetCurrentMagazineAmmo();
     const int32 CurrentReserveAmmo = GetReserveAmmo(Data->AmmoType);
+    // 换弹结束时才扣减备弹，避免动画被打断时提前消耗弹药。
     const int32 AmmoToLoad = FMath::Min(MissingAmmo, CurrentReserveAmmo);
     if (AmmoToLoad <= 0)
     {
@@ -325,6 +328,7 @@ void UWeaponInventoryComponent::AttachWeaponToOwner(AWeaponBase* Weapon)
     USkeletalMeshComponent* Mesh1P = OwnerCharacter->GetMesh1P();
     const FAttachmentTransformRules AttachmentRules(EAttachmentRule::SnapToTarget, true);
     const FName GripSocketName(TEXT("GripPoint"));
+    // 测试或临时蓝图可能没有 GripPoint，降级挂到 Mesh1P 根部避免运行时警告。
     const FName AttachSocketName = Mesh1P->GetSkeletalMeshAsset() && Mesh1P->DoesSocketExist(GripSocketName)
         ? GripSocketName
         : NAME_None;

@@ -49,6 +49,7 @@ void AWeaponPickup::OnPickupSphereBeginOverlap(
     SpawnParams.Instigator = Character;
     SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
+    // 拾取物只是世界中的触发器，真正装备的是新生成的武器实例。
     AWeaponBase* Weapon = GetWorld()->SpawnActor<AWeaponBase>(WeaponClass, GetActorTransform(), SpawnParams);
     if (Weapon && Inventory->AddWeapon(Weapon))
     {

@@ -62,6 +62,7 @@ bool AWeaponBase::StartFire()
     const bool bFired = FireOnce();
     if (bFired && WeaponData->FireMode == EWeaponFireMode::FullAuto && GetWorld())
     {
+        // 全自动武器先立即开一枪，再用定时器按射速持续补发。
         const float Interval = FMath::Max(WeaponData->FireInterval, 0.01f);
         GetWorld()->GetTimerManager().SetTimer(AutoFireTimerHandle, this, &AWeaponBase::HandleAutoFire, Interval, true);
     }
@@ -123,6 +124,7 @@ bool AWeaponBase::FireFromViewpoint(const FVector& TraceStart, const FVector& Tr
     bool bAnyHeadshot = false;
     const TArray<FVector> ShotDirections = BuildShotDirections(TraceDirection);
 
+    // 射线从视角出发，忽略持有者和武器自身，避免第一人称模型挡住枪线。
     FCollisionQueryParams QueryParams(SCENE_QUERY_STAT(WeaponTrace), true);
     QueryParams.AddIgnoredActor(this);
     if (OwnerCharacter)
@@ -141,6 +143,7 @@ bool AWeaponBase::FireFromViewpoint(const FVector& TraceStart, const FVector& Tr
         FHitResult Hit;
         if (World->LineTraceSingleByChannel(Hit, TraceStart, TraceEnd, FPSDemoWeapon::WeaponTraceChannel, QueryParams))
         {
+            // 霰弹的每颗弹丸都会独立结算伤害；最后一次命中结果只供蓝图生成一次表现事件。
             LastHit = Hit;
             LastHitActor = Hit.GetActor();
             const bool bHeadshot = IsHeadshotBone(Hit.BoneName);
@@ -222,6 +225,7 @@ float AWeaponBase::CalculateDamageForBone(FName BoneName) const
 
 bool AWeaponBase::IsHeadshotBone(FName BoneName)
 {
+    // 约定骨骼名包含 head 即视为爆头，兼容 Head、head_jnt 等常见命名。
     return BoneName.ToString().Contains(TEXT("head"), ESearchCase::IgnoreCase);
 }
 
@@ -238,6 +242,7 @@ TArray<FVector> AWeaponBase::BuildShotDirections(const FVector& AimDirection) co
     Directions.Reserve(PelletCount);
 
     const float SpreadRadians = WeaponData ? FMath::DegreesToRadians(FMath::Max(WeaponData->SpreadAngleDegrees, 0.0f)) : 0.0f;
+    // 无散布时保持准星方向；有散布时在圆锥内随机生成弹丸方向。
     for (int32 Index = 0; Index < PelletCount; ++Index)
     {
         Directions.Add(SpreadRadians > 0.0f ? FMath::VRandCone(SafeAimDirection, SpreadRadians) : SafeAimDirection);
@@ -251,6 +256,7 @@ float AWeaponBase::ApplyDamageToHit(const FHitResult& Hit, const FVector& ShotDi
     AActor* HitActor = Hit.GetActor();
     if (!HitActor && Hit.GetComponent())
     {
+        // 某些组件命中不会回填命中对象，回退到组件所属对象，避免伤害被丢弃。
         HitActor = Hit.GetComponent()->GetOwner();
     }
     if (!HitActor)
@@ -268,6 +274,7 @@ float AWeaponBase::ApplyDamageToHit(const FHitResult& Hit, const FVector& ShotDi
         InstigatorController = GetInstigatorController();
     }
 
+    // 传入完整命中结果，让受击方可以继续读取骨骼、命中点和法线信息。
     return UGameplayStatics::ApplyPointDamage(
         HitActor,
         CalculateDamageForBone(Hit.BoneName),
@@ -282,6 +289,7 @@ bool AWeaponBase::GetOwnerViewpoint(FVector& OutStart, FVector& OutDirection) co
 {
     if (OwnerCharacter && OwnerCharacter->GetFirstPersonCameraComponent())
     {
+        // 玩家开火以相机为准，避免准星命中位置与枪口模型偏移产生手感不一致。
         const UCameraComponent* Camera = OwnerCharacter->GetFirstPersonCameraComponent();
         OutStart = Camera->GetComponentLocation();
         OutDirection = Camera->GetForwardVector();
@@ -290,6 +298,7 @@ bool AWeaponBase::GetOwnerViewpoint(FVector& OutStart, FVector& OutDirection) co
 
     if (MuzzlePoint)
     {
+        // 没有关联玩家时使用枪口方向，方便测试或非玩家持有者复用。
         OutStart = MuzzlePoint->GetComponentLocation();
         OutDirection = MuzzlePoint->GetForwardVector();
         return true;

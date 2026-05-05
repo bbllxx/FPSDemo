@@ -58,6 +58,7 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Weapon")
     bool FireOnce();
 
+    // 从指定视角执行射线开火，主要供玩家相机、测试或非标准持有者复用。
     UFUNCTION(BlueprintCallable, Category = "Weapon")
     bool FireFromViewpoint(const FVector& TraceStart, const FVector& TraceDirection);
 
@@ -88,9 +89,11 @@ public:
     UFUNCTION(BlueprintPure, Category = "Weapon")
     static bool IsHeadshotBone(FName BoneName);
 
+    // 按武器配置生成本次开火的弹道方向；霰弹枪会返回多条弹丸方向。
     UFUNCTION(BlueprintPure, Category = "Weapon")
     TArray<FVector> BuildShotDirections(const FVector& AimDirection) const;
 
+    // 根据命中骨骼计算最终伤害，并把点伤害事件发送给受击对象。
     UFUNCTION(BlueprintCallable, Category = "Weapon")
     float ApplyDamageToHit(const FHitResult& Hit, const FVector& ShotDirection) const;
 

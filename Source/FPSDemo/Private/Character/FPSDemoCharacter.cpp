@@ -52,6 +52,7 @@ void AFPSDemoCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AFPSDemoCharacter::Move);
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &AFPSDemoCharacter::Look);
 
+		// 武器输入在蓝图未配置时保持可选，避免影响基础移动和视角。
 		if (FireAction)
 		{
 			EnhancedInputComponent->BindAction(FireAction, ETriggerEvent::Started, this, &AFPSDemoCharacter::StartFire);

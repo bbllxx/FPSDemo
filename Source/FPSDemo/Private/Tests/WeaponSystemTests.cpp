@@ -18,6 +18,7 @@ UWorld* CreateTestWorld()
     UWorld* World = UWorld::CreateWorld(EWorldType::Game, false);
     if (World && GEngine)
     {
+        // 裸 World 需要注册 WorldContext，否则 DestroyActor 和部分伤害流程会缺少引擎上下文。
         FWorldContext& WorldContext = GEngine->CreateNewWorldContext(EWorldType::Game);
         WorldContext.SetCurrentWorld(World);
     }
@@ -277,6 +278,7 @@ bool FWeaponBaseAppliesPointDamageTest::RunTest(const FString& Parameters)
     AWeaponBase* Weapon = FPSDemo::WeaponTests::SpawnWeapon(World, Data);
     UGameInstance* GameInstance = NewObject<UGameInstance>();
     World->SetGameInstance(GameInstance);
+    // APawn::ShouldTakeDamage 依赖权威 GameMode，否则 ApplyPointDamage 会被 Pawn 拒绝。
     TestTrue(TEXT("测试世界应能创建 GameMode 以允许 Pawn 接收伤害"), World->SetGameMode(FURL()));
     TestNotNull(TEXT("测试世界应存在权威 GameMode"), World->GetAuthGameMode());
     ALightZombie* Zombie = World->SpawnActor<ALightZombie>(FVector::ZeroVector, FRotator::ZeroRotator);

@@ -28,6 +28,7 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Weapon")
     void InitializeInventory(AFPSDemoCharacter* NewOwnerCharacter);
 
+    // 添加武器会按数据资产的槽位归档，同槽已有武器会被替换。
     UFUNCTION(BlueprintCallable, Category = "Weapon")
     bool AddWeapon(AWeaponBase* NewWeapon);
 
@@ -49,6 +50,7 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Weapon")
     bool ReloadCurrentWeapon();
 
+    // 完成换弹时才搬运共享备弹，便于由动画通知控制真正装填时机。
     UFUNCTION(BlueprintCallable, Category = "Weapon")
     bool FinishReloadCurrentWeapon();
 
@@ -64,6 +66,7 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Weapon")
     void SetReserveAmmo(EWeaponAmmoType AmmoType, int32 NewReserveAmmo);
 
+    // 备弹按弹药类型共享，不按单把武器单独存储。
     UFUNCTION(BlueprintCallable, Category = "Weapon")
     void AddReserveAmmo(EWeaponAmmoType AmmoType, int32 AmmoToAdd, int32 MaxReserveAmmo);
 
