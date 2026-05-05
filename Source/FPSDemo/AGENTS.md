@@ -20,6 +20,12 @@
 - `.uproject` 使用 `EngineAssociation` 5.4，主模块为 `FPSDemo`。
 - 插件启用：`ModelingToolsEditorMode`、`VisualStudioTools`、`BlueprintMCP`。
 
+## MCP 工具使用约定
+
+- 可以使用 BlueprintMCP 查询虚幻蓝图资源、蓝图图表、默认值和相关设置；除非用户明确要求修改，否则不得通过 BlueprintMCP 创建、删除、移动、连线或改写任何蓝图资源、节点或属性。
+- 使用 BlueprintMCP 创建或调整蓝图图表时，必须把可读性作为硬性约束：新增节点不得重叠或集中在同一坐标；应按执行流、数据流或状态流方向分层排布，相关节点靠近、不同职责留出间距，尽量减少连线交叉；若工具没有自动布局能力，应在创建节点时显式指定位置或创建后调整位置，保证蓝图便于人工检查和后续维护。
+- 遇到由动画蓝图变量、过渡条件、移动速度或加速度判断引起的问题时，优先说明需要用户在蓝图中手动调整；除非用户明确要求，不要用 C++ 反射或 BlueprintMCP 改写蓝图来绕过。
+
 ## 编译命令
 
 - 编辑器目标：
@@ -97,6 +103,5 @@ Set-Location "C:\Users\Administrator.DESKTOP-V16TMRT\Documents\Unreal Projects\F
 
 - 当前多个源码文件中的中文注释在 PowerShell 输出中显示为乱码；编辑代码时应保持或恢复为正常中文注释。
 - 旧追击任务和旧巡逻任务已删除；行为树应改用 `SetState`、`ZombieMoveTo`、`FindPatrolLocation`、内置 `Move To` 和内置 `Wait` 组合。
-- `State` 的写入方式不完全统一：有些地方使用 `SetValueAsName`，有些地方使用 `SetValueAsString`，修改行为树或 Blackboard 时需要确认键类型。
 - `AFPSDemoProjectile::OnHit()` 目前只处理物理模拟组件，没有直接对僵尸造成伤害；后续武器伤害系统可能会改为 LineTrace 和爆头判定。
 - 根目录 `待办事项.md` 记录的方向包括：Decorator/BehaviorTree 优化、攻击 AnimNotify、攻击流程重构、武器 LineTrace 与爆头判定。
