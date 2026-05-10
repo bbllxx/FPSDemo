@@ -1,0 +1,118 @@
+[mcp_servers.blueprint-mcp]
+command = "node"
+args = ["dist/index.js"]
+cwd = 'C:\Users\Administrator.DESKTOP-V16TMRT\Documents\Unreal Projects\FPSDemo\Plugins\BlueprintMCP\Tools'
+enabled = true
+startup_timeout_sec = 30
+tool_timeout_sec = 300
+
+[mcp_servers.blueprint-mcp.env]
+UE_PROJECT_DIR = 'C:\Users\Administrator.DESKTOP-V16TMRT\Documents\Unreal Projects\FPSDemo'
+UE_EDITOR_CMD = 'E:\UE_5.4\Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+UE_PORT = "9847"
+
+[mcp_servers.blueprint-mcp.tools.server_status]
+approval_mode = "approve"
+
+[mcp_servers.blueprint-mcp.tools.list_blueprints]
+approval_mode = "approve"
+
+[mcp_servers.blueprint-mcp.tools.get_blueprint_summary]
+approval_mode = "approve"
+
+[mcp_servers.blueprint-mcp.tools.get_blueprint_graph]
+approval_mode = "approve"
+
+[mcp_servers.blueprint-mcp.tools.snapshot_graph]
+approval_mode = "approve"
+
+[mcp_servers.blueprint-mcp.tools.add_state_machine]
+approval_mode = "approve"
+
+[mcp_servers.blueprint-mcp.tools.add_node]
+approval_mode = "approve"
+
+[mcp_servers.blueprint-mcp.tools.set_pin_default]
+approval_mode = "approve"
+
+[mcp_servers.blueprint-mcp.tools.connect_pins]
+approval_mode = "approve"
+
+[mcp_servers.blueprint-mcp.tools.set_transition_rule]
+approval_mode = "approve"
+
+[mcp_servers.blueprint-mcp.tools.add_anim_transition]
+approval_mode = "approve"
+
+[mcp_servers.blueprint-mcp.tools.get_blueprint]
+approval_mode = "approve"
+
+[mcp_servers.blueprint-mcp.tools.validate_blueprint]
+approval_mode = "approve"
+
+[mcp_servers.blueprint-mcp.tools.exec_command]
+approval_mode = "approve"
+
+[mcp_servers.blueprint-mcp.tools.disconnect_pin]
+approval_mode = "approve"
+
+[mcp_servers.blueprint-mcp.tools.delete_node]
+approval_mode = "approve"
+
+[mcp_servers.blueprint-mcp.tools.move_node]
+approval_mode = "approve"
+
+[mcp_servers.blueprint-mcp.tools.rescan_assets]
+approval_mode = "approve"
+
+[mcp_servers.blueprint-mcp.tools.list_components]
+approval_mode = "approve"
+
+[mcp_servers.blueprint-mcp.tools.refresh_all_nodes]
+approval_mode = "approve"
+
+[mcp_servers.blueprint-mcp.tools.describe_graph]
+approval_mode = "approve"
+
+[mcp_servers.blueprint-mcp.tools.list_properties]
+approval_mode = "approve"
+
+[mcp_servers.blueprint-mcp.tools.find_asset_references]
+approval_mode = "approve"
+
+[mcp_servers.blueprint-mcp.tools.search_blueprints]
+approval_mode = "approve"
+
+[mcp_servers.unrealMCP]
+command = 'C:\Users\Administrator.DESKTOP-V16TMRT\AppData\Roaming\Python\Python311\Scripts\uv.exe'
+args = ["--directory", 'C:\Tools\unreal-mcp\Python', "run", "unreal_mcp_server.py"]
+enabled = false
+startup_timeout_sec = 30
+tool_timeout_sec = 120
+
+[mcp_servers.unrealMCP.tools.get_actors_in_level]
+approval_mode = "approve"
+
+[mcp_servers.unrealMCP.tools.find_actors_by_name]
+approval_mode = "approve"
+
+[mcp_servers.unrealMCP.tools.create_blueprint]
+approval_mode = "approve"
+
+[mcp_servers.unrealMCP.tools.add_component_to_blueprint]
+approval_mode = "approve"
+
+[mcp_servers.unrealMCP.tools.set_static_mesh_properties]
+approval_mode = "approve"
+
+[mcp_servers.unrealMCP.tools.compile_blueprint]
+approval_mode = "approve"
+
+[mcp_servers.unrealMCP.tools.spawn_blueprint_actor]
+approval_mode = "approve"
+
+[mcp_servers.unrealMCP.tools.get_actor_properties]
+approval_mode = "approve"
+
+[mcp_servers.unrealMCP.tools.spawn_actor]
+approval_mode = "approve"

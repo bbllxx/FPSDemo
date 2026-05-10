@@ -11,8 +11,8 @@ AHeavyZombie::AHeavyZombie()
     MaxHealth = 200.0f;         // 高血量（轻型的4倍）
     CurrentHealth = MaxHealth;
     AttackDamage = 25.0f;       // 高攻击伤害
-    AttackRange = 150.0f;       // 中等攻击范围
-    ChaseAcceptableRadius = AttackRange;
+    AttackRange = 250.0f;       // 中等攻击范围
+    ChaseAcceptableRadius = AttackRange - 50.0f;
     AttackCooldown = 2.0f;      // 慢攻击节奏
     DamageReduction = 0.5f;      // 50%伤害减免（实际受到伤害减半）
     PatrolSpeed = 120.0f;

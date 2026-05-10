@@ -11,8 +11,8 @@ ALightZombie::ALightZombie()
     MaxHealth = 50.0f;          // 低血量（重型的一半）
     CurrentHealth = MaxHealth;
     AttackDamage = 10.0f;        // 低攻击伤害
-    AttackRange = 100.0f;        // 短攻击范围（近身）
-    ChaseAcceptableRadius = AttackRange;
+    AttackRange = 150.0f;        // 短攻击范围（近身）
+    ChaseAcceptableRadius = AttackRange - 50.0f;
     AttackCooldown = 1.0f;       // 快攻击节奏
     PatrolSpeed = 250.0f;
     ChaseSpeed = 500.0f;

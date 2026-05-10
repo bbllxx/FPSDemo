@@ -14,6 +14,7 @@
 #include "BehaviorTree/BlackboardComponent.h"
 #include "BehaviorTree/BlackboardData.h"
 #include "BehaviorTree/BehaviorTreeComponent.h"
+#include "Character/FPSDemoCharacter.h"
 #include "Character/Zombies/LightZombie.h"
 #include "Components/SceneComponent.h"
 #include "Engine/World.h"
@@ -397,6 +398,30 @@ bool FBTTaskFindPatrolLocationTest::RunTest(const FString& Parameters)
     TestEqual(TEXT("FindPatrolLocation 应只写巡逻点并立即成功"), FindResult, EBTNodeResult::Succeeded);
     TestEqual(TEXT("无导航数据时应回退写入 HomeLocation"),
         BlackboardComponent->GetValueAsVector(FPSDemo::Tests::PatrolLocationKeyName), HomeLocation);
+
+    World->DestroyWorld(false);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FZombieTeamAttitudeTest,
+    "FPSDemo.AI.Team.ZombieTreatsPlayerAsHostile",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FZombieTeamAttitudeTest::RunTest(const FString& Parameters)
+{
+    UWorld* World = UWorld::CreateWorld(EWorldType::Game, false);
+    if (!TestNotNull(TEXT("应创建测试世界"), World))
+    {
+        return false;
+    }
+
+    AZombieAIController* Controller = World->SpawnActor<AZombieAIController>();
+    AFPSDemoCharacter* PlayerCharacter = World->SpawnActor<AFPSDemoCharacter>();
+
+    TestEqual(TEXT("玩家阵营应为 0"), PlayerCharacter->GetGenericTeamId().GetId(), static_cast<uint8>(0));
+    TestEqual(TEXT("僵尸 AI 阵营应为 1"), Controller->GetGenericTeamId().GetId(), static_cast<uint8>(1));
+    TestEqual(TEXT("僵尸 AI 应把玩家视为敌对"),
+        Controller->GetTeamAttitudeTowards(*PlayerCharacter), ETeamAttitude::Hostile);
 
     World->DestroyWorld(false);
     return true;

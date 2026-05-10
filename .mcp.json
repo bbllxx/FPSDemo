@@ -6,6 +6,15 @@
       "env": {
         "UE_PROJECT_DIR": "."
       }
+    },
+    "unrealMCP": {
+      "command": "C:\\Users\\Administrator.DESKTOP-V16TMRT\\AppData\\Roaming\\Python\\Python311\\Scripts\\uv.exe",
+      "args": [
+        "--directory",
+        "C:/Tools/unreal-mcp/Python",
+        "run",
+        "unreal_mcp_server.py"
+      ]
     }
   }
 }

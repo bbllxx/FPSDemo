@@ -33,6 +33,11 @@ AFPSDemoCharacter::AFPSDemoCharacter()
 	WeaponInventory = CreateDefaultSubobject<UWeaponInventoryComponent>(TEXT("WeaponInventory"));
 }
 
+FGenericTeamId AFPSDemoCharacter::GetGenericTeamId() const
+{
+	return FGenericTeamId(0);
+}
+
 void AFPSDemoCharacter::BeginPlay()
 {
 	Super::BeginPlay();

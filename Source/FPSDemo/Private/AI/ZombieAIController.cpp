@@ -18,18 +18,21 @@ AZombieAIController::AZombieAIController()
     // 允许Tick更新
     PrimaryActorTick.bCanEverTick = true;
 
+    // 1 号阵营表示僵尸
+    SetGenericTeamId(FGenericTeamId(1));
+
     // 创建AI感知组件
     AIPerceptionComp = CreateDefaultSubobject<UAIPerceptionComponent>(TEXT("AIPerceptionComp"));
 
     // 创建并配置视觉感知配置
     UAISenseConfig_Sight* SightConfig = CreateDefaultSubobject<UAISenseConfig_Sight>(TEXT("SightConfig"));
-    SightConfig->SightRadius = 2000.0f;              // 可视范围
-    SightConfig->LoseSightRadius = 2500.0f;         // 丢失目标范围
+    SightConfig->SightRadius = 1000.0f;              // 可视范围
+    SightConfig->LoseSightRadius = 1500.0f;         // 丢失目标范围
     SightConfig->PeripheralVisionAngleDegrees = 120.0f;  // 周边视野角度
-    // 感知 affiliation 设置（可感知敌对、中立单位）
+    // 只感知敌对单位，玩家通过 TeamId 被识别为敌对
     SightConfig->DetectionByAffiliation.bDetectEnemies = true;
     SightConfig->DetectionByAffiliation.bDetectFriendlies = false;
-    SightConfig->DetectionByAffiliation.bDetectNeutrals = true;
+    SightConfig->DetectionByAffiliation.bDetectNeutrals = false;
     // 刺激在感知系统中保留的时长（2秒后自动移除）
     SightConfig->SetMaxAge(2.0f);
 

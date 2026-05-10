@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "GenericTeamAgentInterface.h"
 #include "Logging/LogMacros.h"
 #include "FPSDemoCharacter.generated.h"
 
@@ -16,7 +17,7 @@ struct FInputActionValue;
 DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
 
 UCLASS(config=Game)
-class AFPSDemoCharacter : public ACharacter
+class AFPSDemoCharacter : public ACharacter, public IGenericTeamAgentInterface
 {
 	GENERATED_BODY()
 
@@ -74,6 +75,9 @@ class AFPSDemoCharacter : public ACharacter
 
 public:
 	AFPSDemoCharacter();
+
+	/** 返回玩家阵营编号，供 AI 感知系统判断敌我关系 */
+	virtual FGenericTeamId GetGenericTeamId() const override;
 
 protected:
 	virtual void BeginPlay() override;
