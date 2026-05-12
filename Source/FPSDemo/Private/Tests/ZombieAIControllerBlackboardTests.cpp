@@ -132,6 +132,45 @@ bool FZombieAIControllerBlackboardSyncTest::RunTest(const FString& Parameters)
     return true;
 }
 
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FZombieBaseRotationUsesControllerDesiredRotationTest,
+    "FPSDemo.AI.ZombieBase.RotationUsesControllerDesiredRotation",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FZombieBaseRotationUsesControllerDesiredRotationTest::RunTest(const FString& Parameters)
+{
+    UWorld* World = UWorld::CreateWorld(EWorldType::Game, false);
+    if (!TestNotNull(TEXT("应创建测试世界"), World))
+    {
+        return false;
+    }
+
+    ALightZombie* Zombie = World->SpawnActor<ALightZombie>(FVector::ZeroVector, FRotator::ZeroRotator);
+    TestNotNull(TEXT("应生成测试僵尸"), Zombie);
+    if (!Zombie)
+    {
+        World->DestroyWorld(false);
+        return false;
+    }
+
+    UCharacterMovementComponent* MovementComponent = Zombie->GetCharacterMovement();
+    TestNotNull(TEXT("僵尸应拥有 CharacterMovement 组件"), MovementComponent);
+    if (!MovementComponent)
+    {
+        World->DestroyWorld(false);
+        return false;
+    }
+
+    TestFalse(TEXT("僵尸不应直接使用控制器 Yaw，避免 AI Focus 瞬间设置 Actor 朝向"),
+        Zombie->bUseControllerRotationYaw);
+    TestTrue(TEXT("僵尸应使用控制器目标旋转，让 RotateToFace 按 RotationRate 平滑转身"),
+        MovementComponent->bUseControllerDesiredRotation);
+    TestFalse(TEXT("攻击前看向目标时不应被移动方向旋转覆盖"),
+        MovementComponent->bOrientRotationToMovement);
+
+    World->DestroyWorld(false);
+    return true;
+}
+
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FBTTaskAttackStartsWithoutRangeCheckTest,
     "FPSDemo.AI.BTTask.AttackStartsWithoutRangeCheck",
     EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)

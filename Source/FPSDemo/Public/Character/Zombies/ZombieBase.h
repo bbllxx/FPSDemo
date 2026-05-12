@@ -132,6 +132,14 @@ protected:
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Zombie Stats")
     float AttackCooldown;
 
+    // 攻击命中后是否击退目标角色。
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Zombie Knockback")
+    bool bEnableAttackKnockback;
+
+    // 攻击命中后施加给目标的水平击退速度。
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Zombie Knockback", meta = (EditCondition = "bEnableAttackKnockback", ClampMin = "0.0"))
+    float AttackKnockbackStrength;
+
     // 当前追踪的目标玩家（弱引用，避免循环引用）
     UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Zombie AI")
     TWeakObjectPtr<AActor> TargetPlayer;
@@ -163,6 +171,10 @@ protected:
     /** 对目标造成实际伤害 */
     UFUNCTION(BlueprintCallable, Category = "Zombie")
     virtual float DealDamageToTarget();
+
+    /** 对当前攻击目标施加击退，只在攻击命中结算后调用。 */
+    UFUNCTION(BlueprintCallable, Category = "Zombie")
+    virtual bool ApplyAttackKnockbackToTarget();
 
     /** 攻击事件（Blueprint实现，用于播放攻击动画等） */
     UFUNCTION(BlueprintImplementableEvent, Category = "Zombie")

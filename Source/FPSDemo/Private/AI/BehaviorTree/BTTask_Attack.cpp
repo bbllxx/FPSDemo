@@ -6,8 +6,6 @@
 namespace
 {
 const FName AttackTargetBlackboardKey(TEXT("Target"));
-const FName AttackStateBlackboardKey(TEXT("State"));
-const FName AttackTaskStateName(TEXT("Attack"));
 }
 
 UBTTask_Attack::UBTTask_Attack()
@@ -37,6 +35,5 @@ EBTNodeResult::Type UBTTask_Attack::ExecuteTask(UBehaviorTreeComponent& OwnerCom
         return EBTNodeResult::Failed;
     }
 
-    Blackboard->SetValueAsName(AttackStateBlackboardKey, AttackTaskStateName);
     return Zombie->TryStartAttack() ? EBTNodeResult::Succeeded : EBTNodeResult::Failed;
 }

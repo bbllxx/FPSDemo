@@ -15,6 +15,7 @@ ARangedZombie::ARangedZombie()
     AttackDamage = 15.0f;        // 中等伤害（投射物命中时）
     AttackRange = 2000.0f;        // 极大攻击范围（可远程射击）
     AttackCooldown = 2.0f;        // 中等攻击间隔
+    bEnableAttackKnockback = false;
     PatrolSpeed = 180.0f;
     ChaseSpeed = 350.0f;
 

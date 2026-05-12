@@ -1,4 +1,5 @@
 #include "Character/Zombies/ZombieBase.h"
+#include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
@@ -11,12 +12,17 @@ AZombieBase::AZombieBase()
     // 允许逐帧更新。
     PrimaryActorTick.bCanEverTick = true;
 
+    //防止突然转向
+    bUseControllerRotationYaw = false;
+
     // 默认属性值（子类会覆盖）
     MaxHealth = 100.0f;
     CurrentHealth = MaxHealth;
     AttackDamage = 10.0f;
     AttackRange = 150.0f;
     AttackCooldown = 1.5f;
+    bEnableAttackKnockback = true;
+    AttackKnockbackStrength = 300.0f;
     ZombieType = EZombieType::None;
     TargetPlayer = nullptr;
     ChaseAcceptableRadius = 100.0f;
@@ -210,5 +216,33 @@ float AZombieBase::DealDamageToTarget()
     }
 
     // 应用伤害，伤害来源为僵尸自身
-    return UGameplayStatics::ApplyDamage(TargetPlayer.Get(), AttackDamage, GetController(), this, nullptr);
+    const float AppliedDamage = UGameplayStatics::ApplyDamage(TargetPlayer.Get(), AttackDamage, GetController(), this, nullptr);
+    ApplyAttackKnockbackToTarget();
+    return AppliedDamage;
+}
+
+bool AZombieBase::ApplyAttackKnockbackToTarget()
+{
+    if (!bEnableAttackKnockback || AttackKnockbackStrength <= 0.0f || !TargetPlayer.IsValid())
+    {
+        return false;
+    }
+
+    ACharacter* TargetCharacter = Cast<ACharacter>(TargetPlayer.Get());
+    if (!TargetCharacter || !TargetCharacter->GetCharacterMovement())
+    {
+        return false;
+    }
+
+    //速度向量长度缩为1方便控制力度
+    FVector KnockbackDirection = TargetCharacter->GetActorLocation() - GetActorLocation();
+    if (!KnockbackDirection.Normalize())
+    {
+        return false;
+    }
+
+    FVector LaunchVelocity = KnockbackDirection * AttackKnockbackStrength;
+    LaunchVelocity.Z = 0.0f;
+    TargetCharacter->LaunchCharacter(LaunchVelocity, false, false);
+    return true;
 }

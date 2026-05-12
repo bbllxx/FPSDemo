@@ -13,6 +13,7 @@ AHeavyZombie::AHeavyZombie()
     AttackDamage = 25.0f;       // 高攻击伤害
     AttackRange = 250.0f;       // 中等攻击范围
     ChaseAcceptableRadius = AttackRange - 50.0f;
+    AttackKnockbackStrength = 1000.0f;
     AttackCooldown = 2.0f;      // 慢攻击节奏
     DamageReduction = 0.5f;      // 50%伤害减免（实际受到伤害减半）
     PatrolSpeed = 120.0f;
