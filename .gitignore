@@ -7,7 +7,6 @@ DerivedDataCache/
 *.uproject.tmp
 *.log
 Saved/
-/Content/
 
 # Visual Studio
 .vs/
@@ -37,16 +36,8 @@ P4Win*
 .vscode/
 Backup/
 Plugins/
-Content/__ExternalActors__/
-Content/__ExternalObjects__/
-Content/Characters/
 Content/Collections/
 Content/Developers/
-Content/FirstPersonArms/
-Content/FPWeapon/
-Content/LevelPrototyping/
-Content/StarterContent/
-Content/ThirdPerson/
 Source_Structure.md
 UpgradeLog.htm
 ZombieSystem.md
