@@ -23,6 +23,9 @@ enum class EZombieMoveSpeedMode : uint8
     Chase     UMETA(DisplayName = "追逐")
 };
 
+class AZombieBase;
+DECLARE_MULTICAST_DELEGATE_OneParam(FZombieAttackFinishedSignature, AZombieBase*);
+
 /**
  * AZombieBase - 僵尸基类
  * 所有僵尸类型的父类，继承自ACharacter
@@ -62,6 +65,10 @@ public:
     /** 由攻击动画通知调用，结算本次攻击伤害 */
     UFUNCTION(BlueprintCallable, Category = "Zombie")
     virtual float CommitAttackDamage();
+
+    /** 由攻击结束动画通知调用，结束本次攻击锁定并通知行为树 */
+    UFUNCTION(BlueprintCallable, Category = "Zombie")
+    virtual void FinishAttack();
 
     /** 检查是否可以攻击（冷却是否结束） */
     UFUNCTION(BlueprintCallable, Category = "Zombie")
@@ -106,6 +113,12 @@ public:
     /** 按速度模式应用到 CharacterMovement */
     UFUNCTION(BlueprintCallable, Category = "Zombie AI")
     void ApplyMoveSpeed(EZombieMoveSpeedMode MoveSpeedMode);
+
+    /** 本次攻击动画/攻击锁定是否还没有结束 */
+    UFUNCTION(BlueprintPure, Category = "Zombie")
+    bool IsAttackInProgress() const { return bAttackInProgress; }
+
+    FZombieAttackFinishedSignature OnAttackFinished;
 
 protected:
     // 僵尸类型
@@ -163,6 +176,10 @@ protected:
     // 是否有一次已经发起但尚未由动画通知结算的攻击
     UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Zombie AI")
     bool bAttackDamagePending;
+
+    // 是否有一次攻击动画/攻击锁定正在进行
+    UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Zombie AI")
+    bool bAttackInProgress;
 
     /** 僵尸死亡时调用 */
     UFUNCTION()

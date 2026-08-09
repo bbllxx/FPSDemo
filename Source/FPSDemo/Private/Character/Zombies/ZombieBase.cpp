@@ -31,6 +31,7 @@ AZombieBase::AZombieBase()
     // 初始化为负的冷却时间，确保第一次可以立即攻击
     LastAttackTime = -AttackCooldown;
     bAttackDamagePending = false;
+    bAttackInProgress = false;
 
     // 配置角色移动组件
     GetCharacterMovement()->bOrientRotationToMovement = true;  // 朝向移动方向旋转
@@ -107,6 +108,8 @@ float AZombieBase::TakeDamage(float DamageAmount, struct FDamageEvent const& Dam
  */
 void AZombieBase::OnDeath()
 {
+    FinishAttack();
+
     // 触发蓝图中的死亡事件（播放死亡特效等）。
     OnDeathAnim();
 
@@ -175,13 +178,14 @@ bool AZombieBase::TryStartAttack()
         return false;
     }
 
-    if (bAttackDamagePending)
+    if (bAttackInProgress || bAttackDamagePending)
     {
         return false;
     }
 
     // 更新攻击时间
     LastAttackTime = GetWorld()->GetTimeSeconds();
+    bAttackInProgress = true;
     bAttackDamagePending = true;
     // 触发攻击事件（播放动画等）
     OnAttackAnim();
@@ -197,6 +201,18 @@ float AZombieBase::CommitAttackDamage()
 
     bAttackDamagePending = false;
     return DealDamageToTarget();
+}
+
+void AZombieBase::FinishAttack()
+{
+    if (!bAttackInProgress && !bAttackDamagePending)
+    {
+        return;
+    }
+
+    bAttackInProgress = false;
+    bAttackDamagePending = false;
+    OnAttackFinished.Broadcast(this);
 }
 
 /**

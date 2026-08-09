@@ -218,11 +218,67 @@ bool FBTTaskAttackStartsWithoutRangeCheckTest::RunTest(const FString& Parameters
 
     UBTTask_Attack* AttackTask = NewObject<UBTTask_Attack>();
     const EBTNodeResult::Type Result = AttackTask->ExecuteTask(*BehaviorTreeComponent, nullptr);
-    TestEqual(TEXT("Attack 任务不应自己判断攻击范围"),
-        Result, EBTNodeResult::Succeeded);
+    TestEqual(TEXT("Attack 任务不应自己判断攻击范围，发起攻击后应等待动画结束"),
+        Result, EBTNodeResult::InProgress);
     TestTrue(TEXT("Attack 任务应只尝试发起攻击并等待动画通知结算"),
         FPSDemo::Tests::GetBoolPropertyValue(Zombie, TEXT("bAttackDamagePending")));
+    TestTrue(TEXT("Attack 任务发起后应进入攻击进行中状态"),
+        FPSDemo::Tests::GetBoolPropertyValue(Zombie, TEXT("bAttackInProgress")));
 
+    Zombie->FinishAttack();
+    TestFalse(TEXT("攻击结束后应清除攻击进行中状态"),
+        FPSDemo::Tests::GetBoolPropertyValue(Zombie, TEXT("bAttackInProgress")));
+
+    World->DestroyWorld(false);
+    return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FZombieBaseFinishAttackBroadcastsTest,
+    "FPSDemo.AI.ZombieBase.FinishAttackBroadcastsAndClearsState",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FZombieBaseFinishAttackBroadcastsTest::RunTest(const FString& Parameters)
+{
+    UWorld* World = UWorld::CreateWorld(EWorldType::Game, false);
+    if (!TestNotNull(TEXT("应创建测试世界"), World))
+    {
+        return false;
+    }
+
+    ALightZombie* Attacker = World->SpawnActor<ALightZombie>(FVector::ZeroVector, FRotator::ZeroRotator);
+    AActor* Target = FPSDemo::Tests::SpawnMovableDamageTarget(World, FVector(90.0f, 0.0f, 0.0f));
+    TestNotNull(TEXT("应创建测试攻击者"), Attacker);
+    TestNotNull(TEXT("应创建可移动的伤害测试目标"), Target);
+    if (!Attacker || !Target)
+    {
+        World->DestroyWorld(false);
+        return false;
+    }
+
+    Attacker->SetTargetPlayer(Target);
+
+    bool bAttackFinishedBroadcast = false;
+    const FDelegateHandle DelegateHandle = Attacker->OnAttackFinished.AddLambda(
+        [&bAttackFinishedBroadcast](AZombieBase* FinishedZombie)
+        {
+            bAttackFinishedBroadcast = FinishedZombie != nullptr;
+        });
+
+    TestTrue(TEXT("僵尸应成功发起攻击"), Attacker->TryStartAttack());
+    TestTrue(TEXT("发起攻击后应进入攻击进行中状态"),
+        FPSDemo::Tests::GetBoolPropertyValue(Attacker, TEXT("bAttackInProgress")));
+    TestTrue(TEXT("发起攻击后应等待伤害通知"),
+        FPSDemo::Tests::GetBoolPropertyValue(Attacker, TEXT("bAttackDamagePending")));
+
+    Attacker->FinishAttack();
+
+    TestFalse(TEXT("攻击结束后应清除攻击进行中状态"),
+        FPSDemo::Tests::GetBoolPropertyValue(Attacker, TEXT("bAttackInProgress")));
+    TestFalse(TEXT("攻击结束应清理未结算伤害，避免动画中断后卡住"),
+        FPSDemo::Tests::GetBoolPropertyValue(Attacker, TEXT("bAttackDamagePending")));
+    TestTrue(TEXT("攻击结束应广播给等待中的行为树任务"), bAttackFinishedBroadcast);
+
+    Attacker->OnAttackFinished.Remove(DelegateHandle);
     World->DestroyWorld(false);
     return true;
 }

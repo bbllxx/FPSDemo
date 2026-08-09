@@ -1,0 +1,583 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>类 Lyra 多人战斗 Demo：Codex 实施计划</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --page: #0d0f12;
+      --panel: #15181d;
+      --panel-2: #191d23;
+      --border: #2b3138;
+      --text: #f1f3f5;
+      --muted: #9aa3ad;
+      --accent: #6ea8fe;
+      --accent-strong: #9ec5fe;
+      --code: #20242b;
+      --good: #7ee787;
+      --warn: #ffd580;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background: var(--page);
+      color: var(--text);
+      font: 18px/1.8 system-ui, -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif;
+    }
+    a { color: var(--accent-strong); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .layout {
+      display: grid;
+      grid-template-columns: 260px minmax(0, 1fr);
+      gap: 28px;
+      max-width: 1480px;
+      margin: 0 auto;
+      padding: 28px;
+    }
+    nav {
+      position: sticky;
+      top: 24px;
+      align-self: start;
+      max-height: calc(100vh - 48px);
+      overflow: auto;
+      padding: 20px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: var(--panel);
+    }
+    nav h2 { margin: 0 0 14px; font-size: 1rem; color: var(--accent-strong); }
+    nav a { display: block; padding: 7px 0; color: #d6e7ff; }
+    .nav-number { display: inline-block; width: 32px; color: var(--accent); font-weight: 700; }
+    main { min-width: 0; }
+    section {
+      margin-bottom: 24px;
+      padding: 30px;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: var(--panel);
+    }
+    h1 { margin: 0 0 12px; font-size: clamp(2rem, 4vw, 3.2rem); line-height: 1.2; }
+    h2 { margin: 0 0 18px; color: var(--accent-strong); font-size: 1.65rem; }
+    h3 { margin: 26px 0 10px; color: #dbe9ff; font-size: 1.18rem; }
+    p { margin: 10px 0; }
+    ul, ol { padding-left: 1.5em; }
+    li + li { margin-top: 6px; }
+    .lead {
+      padding: 20px 22px;
+      border-left: 4px solid var(--accent);
+      border-radius: 10px;
+      background: rgba(110, 168, 254, 0.08);
+      color: #e7f1ff;
+    }
+    .callout {
+      margin: 18px 0;
+      padding: 16px 18px;
+      border: 1px solid rgba(110,168,254,.35);
+      border-left: 4px solid var(--accent);
+      border-radius: 10px;
+      background: rgba(110,168,254,.10);
+      color: #d6e7ff;
+    }
+    .callout.warn { border-color: rgba(255,213,128,.45); border-left-color: var(--warn); background: rgba(255,213,128,.08); color: #fff2cf; }
+    .badge {
+      display: inline-block;
+      margin-right: 8px;
+      padding: 2px 10px;
+      border: 1px solid rgba(126,231,135,.4);
+      border-radius: 999px;
+      color: var(--good);
+      font-size: .82rem;
+    }
+    table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+    th, td { padding: 12px 14px; border: 1px solid var(--border); vertical-align: top; text-align: left; }
+    th { background: #1c2430; color: var(--accent-strong); }
+    td { background: var(--panel-2); }
+    code {
+      padding: .1em .35em;
+      border: 1px solid #303946;
+      border-radius: 5px;
+      background: #171b21;
+      color: #dce6f2;
+      font-family: Consolas, "Cascadia Code", monospace;
+      font-size: .92em;
+    }
+    code.file-path { background: #1e2a38; border-color: #3d5a78; color: #e7f1ff; }
+    pre {
+      overflow: auto;
+      padding: 18px;
+      border: 1px solid #343b45;
+      border-radius: 10px;
+      background: var(--code);
+      color: #e6edf3;
+      font: 15px/1.65 Consolas, "Cascadia Code", monospace;
+    }
+    pre code { padding: 0; border: 0; background: transparent; font-size: inherit; }
+    .phase {
+      margin: 16px 0;
+      padding: 18px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--panel-2);
+    }
+    .phase h3 { margin-top: 0; }
+    .checklist { list-style: none; padding-left: 0; }
+    .checklist li::before { content: "□"; margin-right: 10px; color: var(--accent); font-weight: 700; }
+    .flow { padding: 16px 20px; border-radius: 10px; background: #11151a; border: 1px solid var(--border); }
+    .flow strong { color: var(--accent-strong); }
+    .small { color: var(--muted); font-size: .92rem; }
+    @media (max-width: 940px) {
+      .layout { grid-template-columns: 1fr; padding: 14px; }
+      nav { position: static; max-height: none; }
+      section { padding: 22px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <nav aria-label="章节导航">
+      <h2>实施计划</h2>
+      <a href="#handoff"><span class="nav-number">01</span>Codex 交接指令</a>
+      <a href="#requirements"><span class="nav-number">02</span>需求与默认决策</a>
+      <a href="#scope"><span class="nav-number">03</span>范围与非目标</a>
+      <a href="#architecture"><span class="nav-number">04</span>总体架构</a>
+      <a href="#folders"><span class="nav-number">05</span>目录结构</a>
+      <a href="#classes"><span class="nav-number">06</span>核心类职责</a>
+      <a href="#config"><span class="nav-number">07</span>配置与资产</a>
+      <a href="#network"><span class="nav-number">08</span>网络权威</a>
+      <a href="#gas"><span class="nav-number">09</span>GAS 与技能</a>
+      <a href="#flows"><span class="nav-number">10</span>运行链路</a>
+      <a href="#phases"><span class="nav-number">11</span>分阶段实施</a>
+      <a href="#acceptance"><span class="nav-number">12</span>最终验收</a>
+      <a href="#kickoff"><span class="nav-number">13</span>新线程启动提示</a>
+    </nav>
+
+    <main>
+      <section id="handoff">
+        <span class="badge">Codex Handoff</span><span class="badge">UE 5.4</span><span class="badge">多人服务器权威</span>
+        <h1>类 Lyra 多人战斗 Demo<br>Codex 实施计划</h1>
+        <p class="lead">本文件不是概念笔记，而是新项目中的执行规格。目标是从一个新的 UE5 C++ 项目开始，逐步实现精简版 Lyra 架构：Experience + GameFeature、GAS、多人服务器权威、射击、主动技能、闪避无敌帧、敌人 AI、波次关卡和计分。</p>
+
+        <div class="callout">
+          <strong>交给新线程 Codex 的首要指令：</strong>先读取新项目的 <code class="file-path">AGENTS.md</code>、<code class="file-path">.uproject</code>、模块与插件配置，再以本文为需求源建立任务计划。不要一次性生成全部系统；严格按“分阶段实施”推进，每阶段先编译、再做多人 PIE 验证，通过后才进入下一阶段。
+        </div>
+
+        <h3>执行纪律</h3>
+        <ul>
+          <li>只实现当前阶段需要的最小代码，不预建庞大通用框架。</li>
+          <li>改动前核对实际引擎版本、模块名、现有源码和配置，不假定新项目与本 Lyra 仓库完全相同。</li>
+          <li>所有伤害、死亡、AI、波次推进和计分最终由服务器裁决；客户端预测不能成为权威结果。</li>
+          <li>不要直接读取或编辑 <code>.uasset</code>/<code>.umap</code> 二进制。需要资产时创建 C++ 基类，并给出明确的编辑器资产创建与属性连接清单。</li>
+          <li>除非用户在新线程明确授权，不执行 Git 操作。</li>
+          <li>每个阶段报告：修改文件、编辑器接入步骤、构建结果、测试结果、遗留问题。</li>
+        </ul>
+      </section>
+
+      <section id="requirements">
+        <h2>02　已确认需求与默认决策</h2>
+        <table>
+          <thead><tr><th>主题</th><th>已确认方案</th></tr></thead>
+          <tbody>
+            <tr><td>游戏类型</td><td>多人合作 PvE 战斗 Demo，玩家与服务器生成的敌人战斗。</td></tr>
+            <tr><td>网络模型</td><td>服务器权威；支持至少双人联机，并以 Dedicated Server 可运行作为最终目标。</td></tr>
+            <tr><td>架构风格</td><td>精简版 Lyra：保留 Experience + 单个 Combat GameFeature Plugin，不照搬 Lyra 全部组件注入和通用系统。</td></tr>
+            <tr><td>GAS 范围</td><td>射击、换弹、闪避和主动技能全部实现为 Gameplay Ability。</td></tr>
+            <tr><td>闪避</td><td><code>GA_Dodge</code> 使用本地预测；约 0.3 秒内由持续型 GameplayEffect 授予 <code>State.Invulnerable</code>，服务器伤害应用检查该标签。</td></tr>
+            <tr><td>关卡</td><td>简单波次管理；地图保存空间内容，Experience 组装玩法，DataAsset 保存波次和计分参数。</td></tr>
+            <tr><td>计分</td><td>默认每击杀一个敌人 +100；暂定同时记录击杀者个人分数和全队总分。若用户之后只要其中一种，删除另一种，不改变死亡判定链路。</td></tr>
+          </tbody>
+        </table>
+
+        <div class="callout warn">
+          <strong>启动假设：</strong>新项目采用 Unreal Engine 5.4 C++。如果实际版本不同，Codex 必须先按该版本 API 调整插件、模块依赖和 GAS 调用，不应机械复制 UE5.4 代码。项目名尚未确定，本文以 <code>DemoGame</code> 和 <code>CombatDemo</code> 作为占位名。
+        </div>
+      </section>
+
+      <section id="scope">
+        <h2>03　范围与非目标</h2>
+        <h3>首个可玩版本必须包含</h3>
+        <ul>
+          <li>双人进入同一战斗地图；玩家角色正确初始化 ASC 与属性。</li>
+          <li>普通射击、换弹、闪避和至少一项带冷却的主动技能。</li>
+          <li>服务器 AI 敌人会发现、接近和攻击玩家。</li>
+          <li>伤害、无敌、死亡、击杀归属、波次推进和计分均由服务器确认。</li>
+          <li>HUD 显示生命、技能冷却、个人分数、团队分数、当前波次和剩余敌人。</li>
+          <li>一个可配置的战斗关卡 DataAsset，至少包含两波敌人。</li>
+        </ul>
+
+        <h3>首版明确不做</h3>
+        <ul>
+          <li>完整 Lyra Inventory、Equipment、Team、Frontend、CommonSession、Replay 和 Modular Pawn 初始化状态机。</li>
+          <li>复杂背包、掉落、任务、存档、匹配大厅、跨局成长和商业化 UI。</li>
+          <li>射击回溯补偿、竞技级反作弊、助攻分、连杀分和复杂计分公式。</li>
+          <li>多个 GameFeature 插件或为单次使用场景建立抽象工厂。</li>
+        </ul>
+      </section>
+
+      <section id="architecture">
+        <h2>04　总体架构</h2>
+        <p>配置不是“Experience 或配置文件”二选一，而是四层职责分离：</p>
+        <table>
+          <thead><tr><th>层级</th><th>职责</th><th>不应包含</th></tr></thead>
+          <tbody>
+            <tr><td>地图 <code>.umap</code></td><td>场景几何、NavMesh、PlayerStart、带 SpawnGroup 标签的敌人出生点。</td><td>技能逻辑、分数计算、波次状态。</td></tr>
+            <tr><td>Experience</td><td>选择 PawnData、启用 Combat GameFeature、执行 Add Components/Input/UI 等组装动作、引用关卡定义。</td><td>逐帧运行逻辑和大量数值调参。</td></tr>
+            <tr><td><code>UCombatLevelDefinition</code></td><td>波次数组、敌人类型与数量、出生间隔、波次延迟、每次击杀分数、目标分数。</td><td>运行中的剩余敌人数和当前分数。</td></tr>
+            <tr><td><code>.ini</code></td><td>AssetManager 扫描、默认 GameMode/WorldSettings、GameplayTags、网络与技术默认值。</td><td>单个关卡的波次和击杀分数。</td></tr>
+          </tbody>
+        </table>
+
+        <div class="flow">
+          <strong>启动关系：</strong><br>
+          <code>L_Combat01</code> → WorldSettings 选择 <code>B_Experience_CombatDemo</code> → Experience 启用 <code>CombatDemo</code> GameFeature → 给 GameState 注入 <code>UCombatLevelManagerComponent</code> → 组件读取 <code>DA_CombatLevel_01</code> → 仅服务器启动波次。
+        </div>
+
+        <h3>ASC 归属</h3>
+        <ul>
+          <li><strong>玩家：</strong>ASC 与核心 AttributeSet 放在 <code>ADemoPlayerState</code>，Character 作为 Avatar；这样 Pawn 重生时玩家能力身份可保留。</li>
+          <li><strong>敌人：</strong>ASC 与 AttributeSet 直接放在敌人 Character，生命周期与敌人一致。</li>
+          <li><strong>比赛状态：</strong>分数和波次不是 GAS Attribute；个人分数放 PlayerState，团队/波次状态放 GameState 组件。</li>
+        </ul>
+      </section>
+
+      <section id="folders">
+        <h2>05　建议目录结构</h2>
+        <pre><code>Source/DemoGame/
+├── AbilitySystem/
+│   ├── DemoAbilitySystemComponent.*
+│   ├── DemoGameplayAbility.*
+│   ├── DemoAbilitySet.*
+│   └── Attributes/
+├── Character/
+│   ├── DemoCharacter.*
+│   ├── DemoEnemyCharacter.*
+│   └── DemoHealthComponent.*
+├── Player/
+│   ├── DemoPlayerController.*
+│   └── DemoPlayerState.*
+├── GameModes/
+│   ├── DemoGameMode.*
+│   ├── DemoGameState.*
+│   ├── DemoWorldSettings.*
+│   ├── DemoExperienceDefinition.*
+│   ├── DemoExperienceManagerComponent.*
+│   └── DemoPawnData.*
+└── System/
+    ├── DemoAssetManager.*
+    └── DemoGameplayTags.*
+
+Plugins/GameFeatures/CombatDemo/
+├── CombatDemo.uplugin
+├── Config/
+├── Source/CombatDemoRuntime/
+│   ├── AI/
+│   ├── Abilities/
+│   ├── Combat/
+│   ├── Level/
+│   ├── Scoring/
+│   └── UI/
+└── Content/
+    ├── Experiences/
+    ├── LevelDefinitions/
+    ├── PawnData/
+    ├── Abilities/
+    ├── Effects/
+    ├── Enemies/
+    ├── Input/
+    ├── Levels/
+    └── UI/</code></pre>
+        <p class="small">主模块只保存可跨玩法复用的框架；CombatDemo 插件保存本玩法的 AI、能力实现、关卡管理、计分和内容资产。只有一个玩法时不要继续拆插件。</p>
+      </section>
+
+      <section id="classes">
+        <h2>06　核心类职责</h2>
+        <table>
+          <thead><tr><th>类/资产</th><th>职责与关键约束</th></tr></thead>
+          <tbody>
+            <tr><td><code>UDemoExperienceDefinition</code></td><td>Primary Data Asset；包含 GameFeature 列表、默认 PawnData、Actions/ActionSets，以及一个 <code>UCombatLevelDefinition</code> 引用。</td></tr>
+            <tr><td><code>UDemoExperienceManagerComponent</code></td><td>挂在 GameState；服务器设置当前 Experience，复制标识，加载 Primary Assets，激活 GameFeature，完成后广播 ExperienceReady。</td></tr>
+            <tr><td><code>ADemoWorldSettings</code></td><td>每张地图选择默认 Experience。只保存启动选择，不承担波次逻辑。</td></tr>
+            <tr><td><code>ADemoGameMode</code></td><td>仅服务器存在；选择 Experience、处理登录与 Pawn 生成。Experience 未就绪前不生成玩家。</td></tr>
+            <tr><td><code>ADemoPlayerState</code></td><td>拥有玩家 ASC、AttributeSets、PawnData 和个人分数；仅服务器授予 AbilitySet。</td></tr>
+            <tr><td><code>ADemoCharacter</code></td><td>玩家 Avatar；在 <code>PossessedBy</code> 和 <code>OnRep_PlayerState</code> 初始化 ASC ActorInfo；输入转成 Input GameplayTag。</td></tr>
+            <tr><td><code>UDemoHealthComponent</code></td><td>监听 Health Attribute，保证死亡只进入一次，触发死亡 GameplayEvent/Message；不自行决定击杀分。</td></tr>
+            <tr><td><code>UCombatLevelDefinition</code></td><td>纯设计期数据：Waves、ScorePerKill、ScoreToWin。首版避免可选覆盖项和复杂继承。</td></tr>
+            <tr><td><code>UCombatLevelManagerComponent</code></td><td>GameState Component；服务器生成敌人、推进波次、监听敌人死亡、更新复制的团队分与波次状态。</td></tr>
+            <tr><td><code>ACombatEnemySpawnPoint</code></td><td>地图放置 Actor；含 <code>SpawnGroup</code> GameplayTag，供波次配置选择出生区域。</td></tr>
+            <tr><td><code>ADemoEnemyCharacter</code></td><td>拥有敌人 ASC/属性；仅服务器 AI 控制与攻击。死亡后停止 AI、碰撞和能力，并通知关卡管理器。</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="config">
+        <h2>07　配置资产与字段</h2>
+        <h3><code>UCombatLevelDefinition</code></h3>
+        <table>
+          <thead><tr><th>字段</th><th>建议类型/默认值</th><th>说明</th></tr></thead>
+          <tbody>
+            <tr><td><code>Waves</code></td><td><code>TArray&lt;FCombatWaveDefinition&gt;</code></td><td>按顺序执行的波次。</td></tr>
+            <tr><td><code>ScorePerKill</code></td><td><code>int32 = 100</code></td><td>首版所有敌人统一分值；以后出现精英敌人才移入 EnemyDefinition。</td></tr>
+            <tr><td><code>ScoreToWin</code></td><td><code>int32 = 0</code></td><td>0 表示清空全部波次获胜；非 0 可作为额外胜利条件。</td></tr>
+          </tbody>
+        </table>
+
+        <h3><code>FCombatWaveDefinition</code></h3>
+        <table>
+          <thead><tr><th>字段</th><th>建议类型/默认值</th></tr></thead>
+          <tbody>
+            <tr><td><code>EnemyClass</code></td><td><code>TSoftClassPtr&lt;ADemoEnemyCharacter&gt;</code></td></tr>
+            <tr><td><code>EnemyCount</code></td><td><code>int32 = 5</code></td></tr>
+            <tr><td><code>SpawnInterval</code></td><td><code>float = 1.0f</code></td></tr>
+            <tr><td><code>DelayBeforeWave</code></td><td><code>float = 3.0f</code></td></tr>
+            <tr><td><code>SpawnGroup</code></td><td><code>FGameplayTag</code>，例如 <code>Spawn.Enemy.North</code></td></tr>
+          </tbody>
+        </table>
+
+        <h3>首个资产连接</h3>
+        <pre><code>L_Combat01
+└── WorldSettings.DefaultGameplayExperience = B_Experience_CombatDemo
+    ├── GameFeaturesToEnable = CombatDemo
+    ├── DefaultPawnData = DA_PlayerPawn
+    ├── LevelDefinition = DA_CombatLevel_01
+    └── Actions
+        ├── Add UCombatLevelManagerComponent to ADemoGameState
+        ├── Add player input mapping
+        └── Add combat HUD layer</code></pre>
+
+        <h3><code>.ini</code> 只配置</h3>
+        <ul>
+          <li>AssetManager 扫描 Experience、PawnData、LevelDefinition 等 Primary Asset 类型。</li>
+          <li>默认 GameMode、WorldSettings、GameInstance 和 AssetManager 类。</li>
+          <li>GameplayTag 表、碰撞通道、网络与输入技术默认值。</li>
+          <li>不要把 <code>ScorePerKill</code>、波次数组或敌人资产路径写入普通 ini。</li>
+        </ul>
+      </section>
+
+      <section id="network">
+        <h2>08　网络权威与复制矩阵</h2>
+        <table>
+          <thead><tr><th>行为/状态</th><th>发起位置</th><th>权威位置</th><th>客户端如何获知</th></tr></thead>
+          <tbody>
+            <tr><td>输入、射击/闪避表现</td><td>Owning Client</td><td>Server 确认 Ability</td><td>GAS prediction key、GameplayCue、Montage 复制</td></tr>
+            <tr><td>射击命中与伤害</td><td>客户端可提交 TargetData</td><td>Server 验证并应用 GE</td><td>Attribute 复制与 GameplayCue</td></tr>
+            <tr><td>敌人感知、移动、攻击</td><td>Server AIController</td><td>Server</td><td>Actor/Movement/ASC 状态复制</td></tr>
+            <tr><td>无敌标签</td><td>预测型 Dodge Ability</td><td>Server 确认持续 GE</td><td>ASC GameplayEffect/Tag 复制</td></tr>
+            <tr><td>死亡与击杀归属</td><td>HealthComponent 观察属性</td><td>Server，仅处理一次</td><td>死亡状态、消息与表现复制</td></tr>
+            <tr><td>个人分数</td><td>Server Score Handler</td><td>PlayerState</td><td>PlayerState Score 复制</td></tr>
+            <tr><td>团队分/波次/剩余敌人</td><td>Server LevelManager</td><td>GameState Component</td><td>Replicated properties + OnRep</td></tr>
+          </tbody>
+        </table>
+
+        <h3>必须覆盖的网络边界</h3>
+        <ul>
+          <li>客户端不能通过 RPC 直接增加分数、宣告死亡或生成敌人。</li>
+          <li>远端客户端看到的无敌和闪避表现可以稍后到达，但服务器收到伤害时只根据服务器 ASC 标签裁决。</li>
+          <li>客户端 TargetData 必须校验射程、射击起点、方向容差、射速、弹药和目标合法性。</li>
+          <li>晚加入客户端必须从 GameState/PlayerState 复制得到当前分数、波次和剩余敌人数。</li>
+        </ul>
+      </section>
+
+      <section id="gas">
+        <h2>09　GAS、技能与标签设计</h2>
+        <h3>最小能力集合</h3>
+        <table>
+          <thead><tr><th>Ability</th><th>Net Execution</th><th>职责</th></tr></thead>
+          <tbody>
+            <tr><td><code>GA_Weapon_Fire</code></td><td>Local Predicted</td><td>提交瞄准 TargetData；服务器验证射线/弹丸并应用伤害 GE。</td></tr>
+            <tr><td><code>GA_Weapon_Reload</code></td><td>Local Predicted</td><td>播放换弹、等待持续时间、由服务器更新弹药。</td></tr>
+            <tr><td><code>GA_Dodge</code></td><td>Local Predicted</td><td>位移/蒙太奇、冷却、短时应用 <code>GE_DodgeInvulnerable</code>。</td></tr>
+            <tr><td><code>GA_ActiveSkill_01</code></td><td>Local Predicted 或 Server Initiated</td><td>第一项带冷却主动技能；建议先做服务器伤害的范围冲击或投射物。</td></tr>
+            <tr><td><code>GA_Enemy_Melee</code></td><td>Server Only</td><td>AI 攻击窗口内做服务器碰撞检测并应用伤害。</td></tr>
+            <tr><td><code>GA_Death</code></td><td>Server Initiated</td><td>取消战斗能力、停止输入/AI、播放死亡表现。</td></tr>
+          </tbody>
+        </table>
+
+        <h3>最小 AttributeSet</h3>
+        <ul>
+          <li><code>Health</code>、<code>MaxHealth</code>。</li>
+          <li><code>Damage</code> 可作为 Meta Attribute，经 ExecutionCalculation 后扣减 Health。</li>
+          <li>若主动技能需要资源，再增加 <code>Energy</code>/<code>MaxEnergy</code>；不要为暂时不用的属性提前建表。</li>
+        </ul>
+
+        <h3>GameplayTag 命名</h3>
+        <pre><code>InputTag.Weapon.Fire
+InputTag.Weapon.Reload
+InputTag.Ability.Dodge
+InputTag.Ability.Skill01
+
+Ability.Weapon.Fire
+Ability.Weapon.Reload
+Ability.Movement.Dodge
+Ability.Skill.Active01
+
+State.Dead
+State.Invulnerable
+State.Dodging
+State.Reloading
+
+Event.Combat.Damage
+Event.Combat.Death
+Message.Combat.Elimination
+
+Spawn.Enemy.North
+Spawn.Enemy.South</code></pre>
+
+        <h3>闪避无敌规则</h3>
+        <ol>
+          <li>本地按键触发预测型 <code>GA_Dodge</code>，立即播放移动/动画表现。</li>
+          <li>Ability 应用持续约 0.3 秒的 <code>GE_DodgeInvulnerable</code>，授予 <code>State.Invulnerable</code>。</li>
+          <li>所有正式伤害 GameplayEffect 的 Application Tag Requirements 阻止带有 <code>State.Invulnerable</code> 的目标。</li>
+          <li>服务器确认技能失败时，GAS 预测回滚；不能用客户端动画当前帧直接决定无敌。</li>
+          <li>首版使用固定持续时间。只有动画稳定后，才考虑 AnimNotify/GameplayEvent 精确控制无敌窗口。</li>
+        </ol>
+      </section>
+
+      <section id="flows">
+        <h2>10　关键运行链路</h2>
+        <h3>Experience 启动</h3>
+        <div class="flow">地图加载 → Server GameMode 从 WorldSettings 获取 Experience ID → GameState 上的 ExperienceManager 加载资产与 GameFeature → 执行 Actions → 广播 ExperienceReady → 设置 PawnData并生成玩家 → LevelManager 启动第一波。</div>
+
+        <h3>射击与伤害</h3>
+        <div class="flow">客户端输入标签 → ASC 激活 <code>GA_Weapon_Fire</code> → 本地预测表现并提交 TargetData → 服务器检查能力、弹药、射速和射线 → 应用 <code>GE_Damage</code> → AttributeSet 扣血 → 属性复制与命中 GameplayCue。</div>
+
+        <h3>闪避挡伤害</h3>
+        <div class="flow">客户端预测激活 Dodge → 服务器确认并使目标拥有 <code>State.Invulnerable</code> → 敌人服务器攻击尝试应用 Damage GE → Application Tag Requirements 拒绝伤害 → 仍可播放擦过/闪避反馈，但不改变 Health。</div>
+
+        <h3>敌人死亡与计分</h3>
+        <div class="flow">Health ≤ 0 → 服务器 HealthComponent 原子式进入 DeathStarted → 从 EffectContext/Instigator 解析 Killer PlayerState → 广播一次 <code>Message.Combat.Elimination</code> → LevelManager 将击杀者个人分数和 TeamScore 各增加 ScorePerKill → RemainingEnemies-- → 复制 UI → 为 0 时推进下一波或结束比赛。</div>
+      </section>
+
+      <section id="phases">
+        <h2>11　分阶段实施计划</h2>
+        <div class="callout"><strong>规则：</strong>任何阶段编译失败或双人 PIE 核心验收失败时，不进入下一阶段。优先修正当前阶段，不通过堆新代码绕开问题。</div>
+
+        <div class="phase">
+          <h3>阶段 0：新项目基线</h3>
+          <p><strong>实现：</strong>确认引擎版本与项目模块；启用 GameplayAbilities、GameplayTags、GameplayTasks、GameFeatures、ModularGameplay/ModularGameplayActors、EnhancedInput、AIModule、GameplayMessageRuntime、NavigationSystem 和 UMG。只添加实际需要的 Build.cs 依赖。</p>
+          <p><strong>验收：</strong>Editor Development 构建通过；空地图可以双人 PIE；输出当前模块和插件清单。</p>
+        </div>
+
+        <div class="phase">
+          <h3>阶段 1：最小 Experience + GameFeature</h3>
+          <p><strong>实现：</strong><code>DemoAssetManager</code>、<code>DemoExperienceDefinition</code>、<code>DemoExperienceManagerComponent</code>、<code>DemoWorldSettings</code>、<code>DemoGameMode</code>、<code>DemoGameState</code>；创建 CombatDemo GameFeature Runtime 模块和 GameFeatureData；配置 Primary Asset 扫描。</p>
+          <p><strong>验收：</strong>服务器选择 Experience；服务端和客户端各收到一次 ExperienceReady；CombatDemo 插件正确激活；Experience 未就绪前不会提前生成 Pawn。</p>
+        </div>
+
+        <div class="phase">
+          <h3>阶段 2：玩家 ASC、PawnData 与输入标签</h3>
+          <p><strong>实现：</strong>PlayerState 拥有复制的 ASC（多人玩家建议 Mixed 模式）和属性；PawnData 引用 PawnClass、AbilitySet、InputConfig；Character 在服务器 possession 与客户端 OnRep_PlayerState 初始化 ActorInfo；服务器一次性授予 AbilitySet。</p>
+          <p><strong>验收：</strong>两个客户端 ASC Owner/Avatar 正确；能力不重复授予；重生或重新占有不会产生重复 AttributeSet/AbilitySpec；输入标签能触发一个无伤害测试 Ability。</p>
+        </div>
+
+        <div class="phase">
+          <h3>阶段 3：生命、伤害、死亡</h3>
+          <p><strong>实现：</strong>HealthSet、Damage Execution、HealthComponent、死亡事件和 <code>State.Dead</code>；伤害 EffectContext 保留 Instigator/EffectCauser；死亡只处理一次。</p>
+          <p><strong>验收：</strong>只有服务器能改变最终 Health；两个客户端看到一致生命值和死亡；同一敌人不会重复发出死亡消息。</p>
+        </div>
+
+        <div class="phase">
+          <h3>阶段 4：GAS 射击与换弹</h3>
+          <p><strong>实现：</strong>WeaponData/WeaponComponent 的最小弹药状态；<code>GA_Weapon_Fire</code>、<code>GA_Weapon_Reload</code>、伤害 GE、命中 GameplayCue；客户端提交 TargetData，服务器做射程、方向、射速和弹药验证。</p>
+          <p><strong>验收：</strong>客户端射击有即时反馈；服务器决定命中和伤害；篡改/重复请求不能越过射速和弹药限制；远端客户端看到射击与受击表现。</p>
+        </div>
+
+        <div class="phase">
+          <h3>阶段 5：闪避与 0.3 秒无敌帧</h3>
+          <p><strong>实现：</strong><code>GA_Dodge</code>、<code>GE_DodgeInvulnerable</code>、冷却/体力条件（如果已有 Energy）以及伤害 Effect 的 Invulnerable 阻止标签。首版用固定时长，不先做同帧输入比较或回溯。</p>
+          <p><strong>验收：</strong>闪避窗口内服务器拒绝伤害，窗口外正常受伤；高延迟 PIE 下不会由客户端单方面宣告无敌；预测失败能回滚。</p>
+        </div>
+
+        <div class="phase">
+          <h3>阶段 6：主动技能</h3>
+          <p><strong>实现：</strong>至少一项与普通射击行为明显不同的技能，建议范围冲击或服务器投射物；包括 Cost、Cooldown、GameplayCue 和输入标签。核心稳定后再复制模板增加第二项技能。</p>
+          <p><strong>验收：</strong>冷却与资源由服务器验证；客户端 HUD 正确显示；技能伤害同样服从 <code>State.Invulnerable</code>。</p>
+        </div>
+
+        <div class="phase">
+          <h3>阶段 7：服务器 AI 敌人</h3>
+          <p><strong>实现：</strong>EnemyCharacter 自有 ASC；AIController、感知、简单追击/攻击 Behavior Tree；<code>GA_Enemy_Melee</code> 仅服务器执行；先在地图手工放置一个敌人测试。</p>
+          <p><strong>验收：</strong>Dedicated Server 上 AI 正常运行；客户端不运行权威 AI；敌人能伤害玩家，玩家能击杀敌人，死亡后停止 AI 和攻击。</p>
+        </div>
+
+        <div class="phase">
+          <h3>阶段 8：关卡 DataAsset、波次与计分</h3>
+          <p><strong>实现：</strong><code>UCombatLevelDefinition</code>、Wave struct、SpawnPoint、GameState LevelManager；Experience 引用关卡定义；LevelManager 监听唯一的敌人死亡消息并更新个人分数、团队分数、RemainingEnemies 和 CurrentWave。</p>
+          <p><strong>验收：</strong>两波配置按顺序生成；所有生成只发生在服务器；每名敌人只加一次分；晚加入客户端看到当前波次和分数；清空最后一波后结束比赛。</p>
+        </div>
+
+        <div class="phase">
+          <h3>阶段 9：HUD 与比赛反馈</h3>
+          <p><strong>实现：</strong>Experience/GameFeature 添加 HUD；Widget 订阅 ASC 属性、冷却标签/效果、PlayerState 分数和 LevelManager 复制状态。不要让 Widget 保存权威游戏状态。</p>
+          <p><strong>验收：</strong>双人 HUD 各自生命/冷却正确；个人分不同、团队分一致；波次和剩余敌人数与服务器一致。</p>
+        </div>
+
+        <div class="phase">
+          <h3>阶段 10：多人回归与清理</h3>
+          <p><strong>实现：</strong>修复竞态、重复绑定、断线/晚加入问题；增加最小自动化或可重复控制台测试；清理仅由本次实现产生的未使用代码。不要顺便重构无关系统。</p>
+          <p><strong>验收：</strong>Listen Server 2 人、Dedicated Server 2 人、模拟延迟/丢包、玩家死亡/重生、晚加入、连续两局均通过最终验收清单。</p>
+        </div>
+      </section>
+
+      <section id="acceptance">
+        <h2>12　最终验收清单</h2>
+        <ul class="checklist">
+          <li>项目从干净构建状态成功编译，编辑器启动无模块/插件错误。</li>
+          <li>地图通过 WorldSettings 选择 Experience，Experience 激活 CombatDemo GameFeature。</li>
+          <li>两名玩家进入后 ASC、OwnerActor、AvatarActor、能力与属性均正确。</li>
+          <li>射击、换弹、闪避和主动技能均通过 GAS 运行。</li>
+          <li>闪避约 0.3 秒内服务器拒绝伤害，结束后伤害恢复。</li>
+          <li>AI 只在服务器决策，敌人状态正确复制。</li>
+          <li>关卡 DataAsset 可修改波次数量、敌人数、生成间隔和击杀分数，无需改 C++。</li>
+          <li>每名敌人死亡只计分一次；个人分与团队分只由服务器修改。</li>
+          <li>晚加入客户端能看到正确分数、当前波次和剩余敌人。</li>
+          <li>HUD 不保存权威状态，只展示复制数据和 ASC 状态。</li>
+          <li>Listen Server 与 Dedicated Server 各完成至少一局。</li>
+          <li>代码与资产命名一致，无为未来需求提前建立的空抽象层。</li>
+        </ul>
+
+        <h3>推荐的多人测试组合</h3>
+        <table>
+          <thead><tr><th>场景</th><th>重点</th></tr></thead>
+          <tbody>
+            <tr><td>Listen Server + 1 Client</td><td>日常快速回归、预测表现、分数一致性。</td></tr>
+            <tr><td>Dedicated Server + 2 Clients</td><td>确认没有依赖本地主机玩家或客户端 AI 的逻辑。</td></tr>
+            <tr><td>模拟 100–150ms 延迟</td><td>射击反馈、闪避预测、服务器无敌裁决。</td></tr>
+            <tr><td>晚加入</td><td>GameState/PlayerState/LevelManager 的复制初始状态。</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="kickoff">
+        <h2>13　新项目新线程启动提示</h2>
+        <p>在新项目中开启 Codex 后，可以直接发送下面这段话并附上本文路径：</p>
+        <pre><code>请完整读取《类 Lyra 多人战斗 Demo：Codex 实施计划》以及当前项目的 AGENTS.md。
+
+先检查 .uproject、引擎版本、Source、Plugins、Config 和现有资产结构，确认计划中的假设与当前项目是否冲突。然后建立分阶段任务计划，但本轮只执行“阶段 0：新项目基线”。
+
+要求：
+1. 所有实现保持最小化并与计划一致；不要提前实现后续阶段。
+2. 服务器权威边界不可弱化。
+3. 不直接编辑 .uasset/.umap；需要编辑器资产时给出清晰接入清单。
+4. 每阶段完成后执行构建和对应的联机验收，再向我汇报。
+5. 未经我明确授权，不执行任何 Git 操作。</code></pre>
+
+        <h3>原 Lyra 参考实现位置</h3>
+        <p class="small">如果原 LyraStarterGame 仍保留在本机，Codex 可用于核对设计意图，但应重写精简实现，不要整块复制无关系统。</p>
+        <ul>
+          <li><code class="file-path">Source/LyraGame/GameModes/LyraExperienceDefinition.h</code>：Experience 的 GameFeature、PawnData、Actions、ActionSets。</li>
+          <li><code class="file-path">Source/LyraGame/GameModes/LyraWorldSettings.h</code>：地图默认 Experience。</li>
+          <li><code class="file-path">Source/LyraGame/GameModes/LyraGameMode.cpp</code>：服务器选择 Experience 与 ExperienceReady 后生成玩家。</li>
+          <li><code class="file-path">Source/LyraGame/GameModes/LyraExperienceManagerComponent.cpp</code>：Primary Asset、bundle 与 GameFeature 加载链路。</li>
+          <li><code class="file-path">Source/LyraGame/Player/LyraPlayerState.h</code>：玩家 ASC、PawnData、属性与复制状态的归属。</li>
+        </ul>
+
+        <div class="callout">
+          <strong>仍可调整但不阻塞开工：</strong>项目正式名称、第一项主动技能的具体玩法、最终是否同时显示个人分和团队分、是否首版加入玩家死亡后重生。这些选择不影响阶段 0–3 的基础架构；若用户没有补充，按本文默认方案推进。
+        </div>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

@@ -13,4 +13,14 @@ public:
     UBTTask_Attack();
 
     virtual EBTNodeResult::Type ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;
+    virtual EBTNodeResult::Type AbortTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;
+    virtual void OnTaskFinished(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, EBTNodeResult::Type TaskResult) override;
+
+private:
+    void HandleAttackFinished(class AZombieBase* FinishedZombie);
+    void ClearAttackBinding();
+
+    TWeakObjectPtr<UBehaviorTreeComponent> CachedOwnerComp;
+    TWeakObjectPtr<class AZombieBase> CachedZombie;
+    FDelegateHandle AttackFinishedDelegateHandle;
 };
